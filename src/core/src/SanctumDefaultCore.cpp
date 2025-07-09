@@ -406,6 +406,17 @@ std::wstring DefaultCore::GetSanctumDir() const
 {
   return m_sanctumDir.wstring();
 }
+
+
+//----------------------------------------------------------
+/*
+  Получить рабочую директорию
+*/
+//---
+std::wstring DefaultCore::GetWorkDir() const
+{
+  return m_workDir.wstring();
+}
  
 
 //----------------------------------------------------------

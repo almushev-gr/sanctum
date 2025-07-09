@@ -44,6 +44,7 @@ struct FileOperationResult
 struct IfSanctumCore
 {
   virtual OperationResult SetWorkDir(const std::wstring & dirFullPath) = 0;
+  virtual std::wstring GetWorkDir() const = 0; 
   virtual OperationResult SetWorkFile(const std::wstring & fileFullPath) = 0;
   virtual OperationResult SetSanctumDir(const std::wstring & dirFullPath) = 0;
   virtual std::wstring GetSanctumDir() const = 0; 

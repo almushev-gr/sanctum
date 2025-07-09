@@ -41,7 +41,6 @@ void PrintMessage(const std::vector<std::wstring> & messageLines, MessageType me
 }
 
 
-
 int main()
 {
   setlocale(LC_ALL, "Russian");
