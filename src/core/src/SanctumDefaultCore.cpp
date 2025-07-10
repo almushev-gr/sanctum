@@ -236,13 +236,22 @@ FileOperationResult DefaultCore::Put(const std::wstring & path)
       result = PutFileByAbsPath(putPath);
     }
   }
-  else  
+  else // относительный путь в рабочей директории
   {
-    if (putPath.has_filename()) // относительный путь к файлу в рабочей директории
+    std::filesystem::path absPath = m_workDir / putPath;
+
+    if (putPath.parent_path().empty()) // просто имя файла
     {
+      // todo: нужно найти все файлы с таким именем и предложить на выбор
+      result = PutFileByAbsPath(absPath);
     }
-    else // относительный путь к директории в рабочей директории
+    else if (std::filesystem::is_directory(putPath))
     {
+
+    }
+    else
+    {
+      result = PutFileByAbsPath(absPath);
     }
   }
  
