@@ -223,7 +223,14 @@ FileOperationResult DefaultCore::Put(const std::wstring & path)
 
   if (putPath.empty()) // разместить рабочий файл
   {
-
+    if (m_workFile.empty())
+    {
+      result.opResult = OperationResult::NoWorkFile;
+    }
+    else 
+    {
+      result = PutFileByAbsPath(m_workFile);
+    }
   }
   else if (putPath.is_absolute())
   {
@@ -242,12 +249,27 @@ FileOperationResult DefaultCore::Put(const std::wstring & path)
 
     if (putPath.parent_path().empty()) // просто имя файла
     {
-      // todo: нужно найти все файлы с таким именем и предложить на выбор
-      result = PutFileByAbsPath(absPath);
+      std::vector<std::filesystem::path> foundFiles = FindFilesInWorkDir(putPath.filename());
+     
+      if (foundFiles.empty())
+      {
+        result.problemFiles.push_back(putPath);
+        result.opResult = OperationResult::NoSuchFileOrDir;
+      }
+      else if (foundFiles.size() == 1)
+      {
+        result = PutFileByAbsPath(foundFiles[0]);
+      }
+      else 
+      {
+        std::transform(foundFiles.begin(), foundFiles.end(), std::back_inserter(result.ambiguousFiles), 
+        [](const std::filesystem::path & nextPath) { return nextPath.wstring();});
+        result.opResult = OperationResult::AmbiguousInput;
+      }
     }
-    else if (std::filesystem::is_directory(putPath))
+    else if (std::filesystem::is_directory(absPath))
     {
-
+      result = PutFileByAbsPath(absPath);
     }
     else
     {
@@ -256,6 +278,49 @@ FileOperationResult DefaultCore::Put(const std::wstring & path)
   }
  
   return result;
+}
+
+
+//----------------------------------------------------------
+/*
+  Найти файлы по имени в рабочей директории
+*/
+//---
+std::vector<std::filesystem::path> DefaultCore::FindFilesInWorkDir(const std::filesystem::path & fileName)
+{
+  std::vector<std::filesystem::path> foundFiles;
+      
+  try 
+  {
+    for (const auto& entry : std::filesystem::recursive_directory_iterator(m_workDir)) 
+    {
+      if (!std::filesystem::is_regular_file(entry))
+      {
+        continue;
+      }
+
+      if (fileName.has_extension())
+      {
+        if (fileName == entry.path().filename())
+        {
+          foundFiles.push_back(entry.path());
+        }
+      }
+      else
+      {
+        if (fileName == entry.path().stem())
+        {
+          foundFiles.push_back(entry.path());
+        }
+      }
+    }
+  } 
+  catch (const std::filesystem::filesystem_error& err) 
+  {
+    foundFiles.clear();
+  }
+
+  return foundFiles;
 }
 
 
@@ -278,10 +343,11 @@ FileOperationResult DefaultCore::PutFileByAbsPath(const std::filesystem::path & 
     int fileVersion = m_contentsTable.GetFileNextVersion(dirInSanctum.wstring(), putPath.filename().wstring());
     putFile.SetVersion(fileVersion);
     std::vector<FileInsideSanctum> putFiles{putFile};
-    result.opResult = PutFiles(putFiles, PutFileMethod::Append);
+    result = PutFiles(putFiles, PutFileMethod::Append);
   }
   else 
   {
+    result.problemFiles.push_back(putPath.wstring());
     result.opResult = OperationResult::NoSuchFileOrDir;
   }
 
@@ -300,11 +366,13 @@ FileOperationResult DefaultCore::PutDirByAbsPath(const std::filesystem::path & p
  
   if (!std::filesystem::exists(putPath))
   {
+    result.problemFiles.push_back(putPath.wstring());
     result.opResult = OperationResult::NoSuchFileOrDir;
     return result;
   }
 
   result.opResult = OperationResult::Ok;
+  std::filesystem::path nextFile;
     
   try 
   {
@@ -315,17 +383,27 @@ FileOperationResult DefaultCore::PutDirByAbsPath(const std::filesystem::path & p
     {
       if (std::filesystem::is_regular_file(entry)) 
       {
-        std::wstring insideDirPath = GetFileDirUpTo(entry.path().wstring(), putPath.filename().wstring());
+        nextFile = entry.path();
+        std::wstring insideDirPath = GetFileDirUpTo(nextFile.wstring(), putPath.filename().wstring());
         std::wstring dirInSanctumFullPath = dirInSanctum / insideDirPath;
         int version = m_contentsTable.GetFileNextVersion(dirInSanctumFullPath, entry.path().filename());
         filesInSanctum.emplace_back(entry.path().wstring(), dirInSanctumFullPath, version);
       }
     }
 
-    result.opResult = PutFiles(filesInSanctum, PutFileMethod::Append);
+    result = PutFiles(filesInSanctum, PutFileMethod::Append);
   } 
   catch (const std::filesystem::filesystem_error& err) 
   {
+    if (nextFile.empty())
+    {
+      result.problemFiles.push_back(L"Unknown file");
+    }
+    else
+    {
+      result.problemFiles.push_back(nextFile);
+    }
+    
     result.opResult = OperationResult::FileProcessFail;
   }
 
@@ -345,7 +423,7 @@ std::filesystem::path DefaultCore::GetDirInSanctum(const std::filesystem::path &
 
   if (!pathInWorkDir.empty())
   {
-    if (*pathInWorkDir.begin() == L"..")
+    if (*pathInWorkDir.begin() == L"..") // файл\директория вне рабочей директории
     {
       dirInSanctum.clear();
     }
@@ -464,16 +542,18 @@ std::wstring DefaultCore::GetFileDirUpTo(const std::wstring & fullFileName, cons
   Поместить файлы в хранилище
 */
 //---
-OperationResult DefaultCore::PutFiles(std::vector<FileInsideSanctum> & filesInSanctum, PutFileMethod method)
+FileOperationResult DefaultCore::PutFiles(std::vector<FileInsideSanctum> & filesInSanctum, PutFileMethod method)
 {
+  FileOperationResult result;
   std::unique_ptr<std::ofstream> fantomFile = GetFantomOutputStream(method);
-  
+
   if (!fantomFile)
   {
-    return OperationResult::NoSanctum;
+    result.opResult = OperationResult::NoSanctum;
+    return result;
   }
 
-  OperationResult result = OperationResult::Ok;
+  result.opResult = OperationResult::Ok;
   
   for (auto && nextFile : filesInSanctum)
   {
@@ -488,14 +568,15 @@ OperationResult DefaultCore::PutFiles(std::vector<FileInsideSanctum> & filesInSa
     }
     else
     {
-      result = OperationResult::FileProcessFail;
+      result.problemFiles.push_back(nextFile.GetFullPath());
+      result.opResult = OperationResult::FileProcessFail;
       break;
     }
   }
 
   if (fantomFile->fail())
   {
-    result = OperationResult::FileProcessFail;
+    result.opResult = OperationResult::NoSanctum;
   }
 
   fantomFile->close();
@@ -540,7 +621,14 @@ std::unique_ptr<std::ofstream> DefaultCore::GetFantomOutputStream(PutFileMethod 
 
     if (!std::filesystem::exists(GetFantomPath()) && std::filesystem::exists(m_sanctumPath))
     {
-      std::filesystem::copy(m_sanctumPath, GetFantomPath());
+      try 
+      {
+        std::filesystem::copy(m_sanctumPath, GetFantomPath());
+      }
+      catch (const std::filesystem::filesystem_error& err)
+      {
+        return nullptr;
+      }
     }
   }
 

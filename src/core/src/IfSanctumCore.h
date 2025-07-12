@@ -11,9 +11,11 @@ namespace sanctum::core
 enum class OperationResult
 {
   NoSanctum,
+  NoWorkFile, // рабочий файл не задан
   NoSuchFileOrDir,
   FileProcessFail,  // ошибка при работе с файлом
   FileAlreadyExist,
+  AmbiguousInput, // неоднозначные входные данные
   Ok
 };
 
@@ -32,7 +34,8 @@ struct FileDescription
 struct FileOperationResult
 {
   OperationResult opResult; ///< результат операции
-  std::vector<FileDescription> ambiguousFiles; ///< неоднозначные файлы для уточнения
+  std::vector<std::wstring> ambiguousFiles; ///< неоднозначные файлы для уточнения
+  std::vector<std::wstring> problemFiles; ///< файлы, при обработке которых возникли проблемы
 };
 
 

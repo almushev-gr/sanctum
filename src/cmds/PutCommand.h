@@ -1,6 +1,7 @@
 #pragma once
 #include "IfCommand.h"
 #include <IfSanctumCore.h>
+#include <optional>
 
 
 namespace sanctum
@@ -28,6 +29,9 @@ public:
   virtual const std::wstring GetName() const override;
   virtual const std::vector<std::wstring> & GetSuccessMessage() const override { return m_successMessage; }
   virtual const std::vector<std::wstring> & GetFailMessage() const override { return m_failMessage; }
+
+private:
+  std::optional<std::wstring> ResolveAmbiguousInput(const std::vector<std::wstring> & inputFiles) const;
 };
 
 }

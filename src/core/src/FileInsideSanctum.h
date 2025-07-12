@@ -42,6 +42,7 @@ public:
   bool SaveTo(const std::filesystem::path & dirPath) const;
   const std::wstring & GetName() const { return m_name; }
   const std::wstring & GetDirName() const { return m_dirInSanctum; }
+  const std::wstring & GetFullPath() const { return m_fullPath; }
   std::optional<size_t> GetContentSize() const { return m_contentSize; }
   int GetVersion() const { return m_version; }
   size_t GetOffset() const { return m_offset; }
@@ -50,7 +51,7 @@ public:
   void SetVersion(int version) { m_version = version; }
 
 private:
-  bool WriteHeaderTo(std::ofstream & output, sanctum::encrypter::IfEncrypter & encrypter) const;
+  void WriteHeaderTo(std::ofstream & output, sanctum::encrypter::IfEncrypter & encrypter) const;
   bool ReadHeaderFrom(std::ifstream & input, sanctum::encrypter::IfEncrypter & encrypter);
 
 };

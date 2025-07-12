@@ -60,11 +60,12 @@ private:
   std::filesystem::path GetFantomPath() const;
   std::filesystem::path GetRelevantPath() const;
   std::unique_ptr<std::ofstream> GetFantomOutputStream(PutFileMethod method);
-  OperationResult PutFiles(std::vector<FileInsideSanctum> & fileDescs, PutFileMethod method);
+  FileOperationResult PutFiles(std::vector<FileInsideSanctum> & fileDescs, PutFileMethod method);
   FileOperationResult PutFileByAbsPath(const std::filesystem::path & putPath);
   FileOperationResult PutDirByAbsPath(const std::filesystem::path & putPath);
   FileOperationResult GetFile(const std::filesystem::path & dirInSanctum, const std::filesystem::path & fileName) const;
   std::filesystem::path GetDirInSanctum(const std::filesystem::path & absPath) const;
+  std::vector<std::filesystem::path> FindFilesInWorkDir(const std::filesystem::path & fileName);
 
 };
 

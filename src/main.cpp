@@ -59,7 +59,12 @@ int main()
   {
     std::wstring command;
     std::wcout << L"sanctum: ";
-    std::getline(std::wcin, command);
+    std::getline(std::ws(std::wcin), command);
+
+    if (command == L"exit")
+    {
+      break;
+    }
 
     std::wregex regex_space(L"\\s+");
     std::wsregex_token_iterator iter (command.begin(), command.end(), regex_space, -1);
@@ -92,11 +97,6 @@ int main()
     else
     {
       PrintMessage({L"Command doesnt exist"}, MessageType::Fail);
-    }
-  
-    if (command == L"exit")
-    {
-      break;
     }
   }
   

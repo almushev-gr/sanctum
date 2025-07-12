@@ -11,7 +11,7 @@ namespace
   */
   //---
   template <typename T>
-  bool WriteDigitToStream(std::ofstream & output, T element)
+  void WriteDigitToStream(std::ofstream & output, T element)
   {
     const char * nextByte = reinterpret_cast<const char*>(&element);
 
@@ -20,8 +20,6 @@ namespace
       output << *nextByte;
       nextByte++;
     }
-
-    return true;
   }
 
 
@@ -180,14 +178,7 @@ bool FileInsideSanctum::ReadHeaderFrom(std::ifstream & input, sanctum::encrypter
 //---
 bool FileInsideSanctum::WriteTo(std::ofstream & output, sanctum::encrypter::IfEncrypter & encrypter)
 {
-  std::streamoff offset = static_cast<std::streamoff>(output.tellp());
-  m_offset = offset;
-
-  if (!WriteHeaderTo(output, encrypter))
-  {
-    return false;
-  }
-
+  m_offset = static_cast<std::streamoff>(output.tellp());
   std::ifstream file(m_fullPath.c_str(), std::ios::binary);
 
   if (!file.is_open())
@@ -207,6 +198,7 @@ bool FileInsideSanctum::WriteTo(std::ofstream & output, sanctum::encrypter::IfEn
   {
     file.close();
 
+    WriteHeaderTo(output, encrypter);
     std::vector<char> encFileBytes = encrypter.Encrypt(fileBytes);
     WriteDigitToStream<size_t>(output, encFileBytes.size());
 
@@ -228,7 +220,7 @@ bool FileInsideSanctum::WriteTo(std::ofstream & output, sanctum::encrypter::IfEn
   Записать заголовок файла в поток
 */
 //---
-bool FileInsideSanctum::WriteHeaderTo(std::ofstream & output, sanctum::encrypter::IfEncrypter & encrypter) const
+void FileInsideSanctum::WriteHeaderTo(std::ofstream & output, sanctum::encrypter::IfEncrypter & encrypter) const
 {
   WriteDigitToStream<int>(output, m_version);
   
@@ -242,8 +234,6 @@ bool FileInsideSanctum::WriteHeaderTo(std::ofstream & output, sanctum::encrypter
 
   WriteDigitToStream<size_t>(output, encFileName.size());
   WriteStringToStream(output, encFileName);
-
-  return true;
 }
 
 
