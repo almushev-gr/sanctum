@@ -16,6 +16,9 @@ enum class OperationResult
   FileProcessFail,  // ошибка при работе с файлом
   FileAlreadyExist,
   AmbiguousInput, // неоднозначные входные данные
+  InvalidKey, // неверный ключ для шифрации
+  KeyHashDismatch, // несовпадение хеша ключа и хеша в ядре
+  KeyRequired, // требуется ключ для шифрации
   UnknownError,
   Ok
 };
@@ -56,6 +59,7 @@ struct IfSanctumCore
   virtual FileOperationResult Put(const std::wstring & path) = 0;
   virtual FileOperationResult Get(const std::wstring & path) = 0;
   virtual bool SaveConfig() const = 0;
+  virtual void SetOperationKey(const std::string & key) = 0;
   //virtual SetEncryptor
   //vittual GetEncryptor
   virtual std::vector<FileDescription> GetFileDescriptions() const = 0;

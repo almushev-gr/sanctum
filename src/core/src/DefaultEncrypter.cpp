@@ -1,20 +1,10 @@
 #include "DefaultEncrypter.h"
+#include "IfEncrypter.h"
 #include <algorithm>
 
 
 namespace sanctum::encrypter
 {
-
-//----------------------------------------------------------
-/*
- 
-*/
-//---
-DefaultEncrypter::DefaultEncrypter()
-  : m_key("defPass")
-{
-}
-
 
 //----------------------------------------------------------
 /*
@@ -70,12 +60,38 @@ std::string DefaultEncrypter::Decrypt(const std::string & str)
 
 //----------------------------------------------------------
 /*
-  Задать ключ шифрации
+  Получить политику работы с ключом
+  В умолчательном шифраторе используется слабая защита
+  внешним ключом-паролем на уровне ядра
 */
 //---
-void DefaultEncrypter::SetKey(const std::string & key)
+KeyPolicy DefaultEncrypter::GetKeyPolicy() const
 {
-  m_key = key;
+  return KeyPolicy::KeyForCall;
+}
+
+
+//----------------------------------------------------------
+/*
+  Проверить допустим ключ для шифрации или нет
+  Так как в умолчательном шифраторе ключ не используется,
+  то подходит любой ключ
+*/
+//---
+bool DefaultEncrypter::IsKeyValid(const std::string & key) const 
+{
+  return true;
+}
+
+
+//----------------------------------------------------------
+/*
+  Создать шифратор
+*/
+//---
+std::unique_ptr<IfEncrypter> Create()
+{
+  return std::make_unique<DefaultEncrypter>();
 }
 
 }

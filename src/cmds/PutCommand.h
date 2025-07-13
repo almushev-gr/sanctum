@@ -32,6 +32,7 @@ public:
 
 private:
   std::optional<std::wstring> ResolveAmbiguousInput(const std::vector<std::wstring> & inputFiles) const;
+  bool EnterOperationKey();
 };
 
 }

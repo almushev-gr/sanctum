@@ -1,4 +1,5 @@
 #include "SanctumDefaultCore.h"
+#include "IfEncrypter.h"
 #include "IfSanctumCore.h"
 #include <pugixml/pugixml.hpp>
 #include <DefaultEncrypter.h>
@@ -6,6 +7,7 @@
 #include <algorithm>
 #include <iostream>
 #include <numeric>
+#include <functional>
 
 
 namespace 
@@ -30,6 +32,7 @@ DefaultCore::DefaultCore()
   , m_sanctumName(c_sanctumDefaultName)
   , m_sanctumPath()
   , m_contentsTable()
+  , m_keyHash(std::hash<std::string>{}("defpass"))
 {
   LoadConfig();
   m_sanctumPath = m_sanctumDir / m_sanctumName;
@@ -217,6 +220,19 @@ FileOperationResult DefaultCore::GetFile(const std::filesystem::path & dirInSanc
 FileOperationResult DefaultCore::Put(const std::wstring & path)
 {
   FileOperationResult result;
+  OperationResult checkKeyResult = CheckKey();
+
+  if (checkKeyResult != OperationResult::Ok)
+  {
+    m_operationKey.clear();
+    result.opResult = checkKeyResult;
+    return result;
+  }
+  else 
+  {
+    m_keyHash = std::hash<std::string>{}(GetKey());
+  }
+
   result.opResult = OperationResult::Ok;
   std::filesystem::path putPath(path);
 
@@ -276,7 +292,63 @@ FileOperationResult DefaultCore::Put(const std::wstring & path)
     }
   }
  
+  m_operationKey.clear();
   return result;
+}
+
+
+//----------------------------------------------------------
+/*
+  Проверка ключа шифрации
+*/
+//---
+OperationResult DefaultCore::CheckKey() const
+{
+  OperationResult result = OperationResult::Ok;
+
+  switch (m_encrypter->GetKeyPolicy())
+  {
+    case sanctum::encrypter::KeyPolicy::KeyForCall:
+    {
+      if (GetKey().empty())
+      {
+        result = OperationResult::KeyRequired;
+      }
+      else if (std::hash<std::string>{}(GetKey()) != m_keyHash)
+      {
+        result = OperationResult::InvalidKey;
+      }
+    }
+    break;
+
+    case sanctum::encrypter::KeyPolicy::KeyForEncryption:
+    break;
+
+    case sanctum::encrypter::KeyPolicy::NoKey:
+    break;
+  }
+  
+  return result;
+}
+
+
+//----------------------------------------------------------
+/*
+  Получить ключ шифрации
+*/
+//---
+std::string DefaultCore::GetKey() const
+{
+  if (!m_permanentKey.empty())
+  {
+    return m_permanentKey;
+  }
+  else if (!m_operationKey.empty())
+  {
+    return m_operationKey;
+  }
+
+  return "";
 }
 
 
@@ -736,6 +808,19 @@ void DefaultCore::LoadConfig()
       m_workDir = cfgNodeValue;
     }
   }
+}
+
+
+//----------------------------------------------------------
+/*
+  Задать оперативный ключ шифрации
+  Действует только для одной операции, требующей ключа
+  По окончании операции обнуляется
+*/
+//---
+void DefaultCore::SetOperationKey(const std::string & key)
+{
+  m_operationKey = key;
 }
 
 
