@@ -1,5 +1,6 @@
 #include "SanctumDefaultCore.h"
 #include "IfSanctumCore.h"
+#include <pugixml/pugixml.hpp>
 #include <DefaultEncrypter.h>
 #include <filesystem>
 #include <algorithm>
@@ -29,10 +30,8 @@ DefaultCore::DefaultCore()
   , m_sanctumName(c_sanctumDefaultName)
   , m_sanctumPath()
   , m_contentsTable()
- {
-  // todo: считать конфигу
-  // здесь должен быть уже сформированы корректные пути к хранилищу
-
+{
+  LoadConfig();
   m_sanctumPath = m_sanctumDir / m_sanctumName;
   m_contentsTable.Update(GetRelevantPath(), *m_encrypter);
 }
@@ -640,6 +639,103 @@ std::unique_ptr<std::ofstream> DefaultCore::GetFantomOutputStream(PutFileMethod 
   }
   
   return nullptr;
+}
+
+
+//----------------------------------------------------------
+/*
+  Сохранить конфигурацию ядра
+*/
+//---
+bool DefaultCore::SaveConfig() const
+{
+  pugi::xml_document doc;
+
+  pugi::xml_node cfgRootNode = doc.append_child(L"SanctumCfg");
+  pugi::xml_node cfgDirNode = cfgRootNode.append_child(L"SanctumDir");
+
+  if (m_sanctumDir == std::filesystem::current_path())
+  {
+    cfgDirNode.append_child(pugi::node_pcdata).set_value(L"Default");
+  }
+  else
+  {
+    cfgDirNode.append_child(pugi::node_pcdata).set_value(m_sanctumDir.wstring().c_str());
+  }
+  
+  pugi::xml_node cfgWorkDirNode = cfgRootNode.append_child(L"WorkDir");
+  
+  if (m_workDir == std::filesystem::current_path())
+  {
+    cfgWorkDirNode.append_child(pugi::node_pcdata).set_value(L"Default");
+  }
+  else
+  {
+    cfgWorkDirNode.append_child(pugi::node_pcdata).set_value(m_workDir.wstring().c_str());
+  }
+
+  if (doc.save_file("sanctumcfg.xml")) 
+  {
+    return true;
+  }
+  
+  return false;
+}
+
+
+//----------------------------------------------------------
+/*
+  Загрузить конфигурацию ядра из внешнего xml-файла
+*/
+//---
+void DefaultCore::LoadConfig()
+{
+  pugi::xml_document doc;
+
+  if (!doc.load_file("sanctumcfg.xml"))
+  {
+    return;
+  }
+
+  pugi::xml_node cfgRootNode = doc.child(L"SanctumCfg");
+
+  if (!cfgRootNode)
+  {
+    return;
+  }
+
+  pugi::xml_node cfgDirNode = cfgRootNode.child(L"SanctumDir");
+  std::wstring cfgNodeValue;
+
+  if (cfgDirNode)
+  {
+    cfgNodeValue = cfgDirNode.child_value();
+
+    if (cfgNodeValue == L"Default")
+    {
+      m_sanctumDir = std::filesystem::current_path();
+    }
+    else 
+    {
+      m_sanctumDir = cfgNodeValue;
+    }
+  }
+
+  pugi::xml_node cfgWorkDirNode = cfgRootNode.child(L"WorkDir");
+
+  if (cfgWorkDirNode)
+  {
+    cfgNodeValue = cfgWorkDirNode.child_value();
+
+    if (cfgNodeValue == L"Default")
+    {
+      m_workDir = std::filesystem::current_path();
+    }
+    else 
+    {
+      m_workDir = cfgNodeValue;
+    }
+  }
 }
 
 

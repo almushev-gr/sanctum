@@ -17,6 +17,8 @@ add_executable(${exe_target}
     "src/cmds/WorkDirCommand.cpp"
     "src/cmds/PutCommand.h"
     "src/cmds/PutCommand.cpp"
+    "src/cmds/SaveConfigCommand.h"
+    "src/cmds/SaveConfigCommand.cpp"
     "src/core/src/IfSanctumCore.h"
 )
 target_link_libraries(sanctum SanctumDefaultCore)

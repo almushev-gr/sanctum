@@ -16,6 +16,8 @@ add_library(${lib_target}
     "src/DefaultEncrypter.cpp"
     "src/ContentsTable.h"
     "src/ContentsTable.cpp"
+    "src/pugixml/pugixml.hpp"
+    "src/pugixml/pugixml.cpp"
 )
 
 target_include_directories(${lib_target} PRIVATE "src")

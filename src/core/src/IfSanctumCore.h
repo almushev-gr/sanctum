@@ -16,6 +16,7 @@ enum class OperationResult
   FileProcessFail,  // ошибка при работе с файлом
   FileAlreadyExist,
   AmbiguousInput, // неоднозначные входные данные
+  UnknownError,
   Ok
 };
 
@@ -54,7 +55,7 @@ struct IfSanctumCore
   virtual OperationResult SetSanctumName(const std::wstring & name) = 0;
   virtual FileOperationResult Put(const std::wstring & path) = 0;
   virtual FileOperationResult Get(const std::wstring & path) = 0;
-  //virtual SaveConfig
+  virtual bool SaveConfig() const = 0;
   //virtual SetEncryptor
   //vittual GetEncryptor
   virtual std::vector<FileDescription> GetFileDescriptions() const = 0;

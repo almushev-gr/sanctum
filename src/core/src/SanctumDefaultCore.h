@@ -54,6 +54,7 @@ public:
   virtual FileOperationResult Get(const std::wstring & path) override;
   virtual OperationResult Commit() override;
   virtual std::vector<FileDescription> GetFileDescriptions() const override;
+  virtual bool SaveConfig() const override;
 
 private:
   std::wstring GetFileDirUpTo(const std::wstring & fileName, const std::wstring & dirName);
@@ -66,6 +67,7 @@ private:
   FileOperationResult GetFile(const std::filesystem::path & dirInSanctum, const std::filesystem::path & fileName) const;
   std::filesystem::path GetDirInSanctum(const std::filesystem::path & absPath) const;
   std::vector<std::filesystem::path> FindFilesInWorkDir(const std::filesystem::path & fileName);
+  void LoadConfig();
 
 };
 

@@ -2,6 +2,7 @@
 #include "SanctumDirCommand.h"
 #include "WorkDirCommand.h"
 #include "PutCommand.h"
+#include "SaveConfigCommand.h"
 #include <algorithm>
 
 
@@ -19,6 +20,7 @@ CommandNomenclature::CommandNomenclature(core::IfSanctumCore & core)
   m_cmds.emplace_back(std::make_unique<SanctumDirCommand>(*m_core));
   m_cmds.emplace_back(std::make_unique<WorkDirCommand>(*m_core));
   m_cmds.emplace_back(std::make_unique<PutCommand>(*m_core));
+  m_cmds.emplace_back(std::make_unique<SaveConfigCommand>(*m_core));
 }
 
 
