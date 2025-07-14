@@ -513,9 +513,12 @@ std::filesystem::path DefaultCore::GetDirInSanctum(const std::filesystem::path &
   Получить описания файла
 */
 //---
-std::vector<FileDescription> DefaultCore::GetFileDescriptions() const 
+ContentsOperationResult DefaultCore::GetFileDescriptions() const 
 {
-  return m_contentsTable.GetDescriptions();
+  ContentsOperationResult result;
+  result.opResult = OperationResult::Ok;
+  result.descs = m_contentsTable.GetDescriptions();
+  return result;
 }
 
 

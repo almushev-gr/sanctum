@@ -1,7 +1,6 @@
 #pragma once
-#include "IfCommand.h"
+#include "Command.h"
 #include <IfSanctumCore.h>
-#include <optional>
 
 
 namespace sanctum
@@ -15,24 +14,13 @@ namespace sanctum
   быть задан относительно рабочей директории
 */
 //---
-class PutCommand : public IfCommand
+class PutCommand : public Command
 {
-private:
-  core::IfSanctumCore * m_core; ///< ядро хранилища
-  std::vector<std::wstring> m_successMessage; ///< сообщение успешного завершения
-  std::vector<std::wstring> m_failMessage; ///< сообщение провального завершения
- 
 public:
   PutCommand(core::IfSanctumCore & core);
   virtual ~PutCommand() = default;
   virtual bool Run(const std::vector<std::wstring> & params) override;
   virtual const std::wstring GetName() const override;
-  virtual const std::vector<std::wstring> & GetSuccessMessage() const override { return m_successMessage; }
-  virtual const std::vector<std::wstring> & GetFailMessage() const override { return m_failMessage; }
-
-private:
-  std::optional<std::wstring> ResolveAmbiguousInput(const std::vector<std::wstring> & inputFiles) const;
-  bool EnterOperationKey();
 };
 
 }

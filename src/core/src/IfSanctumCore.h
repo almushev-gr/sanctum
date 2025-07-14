@@ -23,6 +23,7 @@ enum class OperationResult
   Ok
 };
 
+
 // Описание файла
 struct FileDescription
 {
@@ -40,6 +41,14 @@ struct FileOperationResult
   OperationResult opResult; ///< результат операции
   std::vector<std::wstring> ambiguousFiles; ///< неоднозначные файлы для уточнения
   std::vector<std::wstring> problemFiles; ///< файлы, при обработке которых возникли проблемы
+};
+
+
+// Результат операции на содержанием хранилища
+struct ContentsOperationResult
+{
+  OperationResult opResult; ///< результат операции
+  std::vector<FileDescription> descs; ///< описания файлов
 };
 
 
@@ -62,7 +71,7 @@ struct IfSanctumCore
   virtual void SetOperationKey(const std::string & key) = 0;
   //virtual SetEncryptor
   //vittual GetEncryptor
-  virtual std::vector<FileDescription> GetFileDescriptions() const = 0;
+  virtual ContentsOperationResult GetFileDescriptions() const = 0;
   virtual OperationResult Commit() = 0;
   virtual ~IfSanctumCore() = default;
 };

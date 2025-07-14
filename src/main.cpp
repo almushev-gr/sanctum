@@ -3,6 +3,8 @@
 #include <IfSanctumCore.h>
 #include <cmds/IfCommand.h>
 #include <regex>
+#include <windows.h>
+#include <locale>
 
 
 // Тип воможного сообщения 
@@ -43,6 +45,8 @@ void PrintMessage(const std::vector<std::wstring> & messageLines, MessageType me
 
 int main()
 {
+  SetConsoleCP(1251);
+  SetConsoleOutputCP(1251);
   setlocale(LC_ALL, "Russian");
   std::unique_ptr<sanctum::core::IfSanctumCore> core = sanctum::core::CreateSanctumCore();
   

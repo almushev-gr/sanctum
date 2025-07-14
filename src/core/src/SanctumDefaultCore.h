@@ -56,7 +56,7 @@ public:
   virtual FileOperationResult Put(const std::wstring & path) override;
   virtual FileOperationResult Get(const std::wstring & path) override;
   virtual OperationResult Commit() override;
-  virtual std::vector<FileDescription> GetFileDescriptions() const override;
+  virtual ContentsOperationResult GetFileDescriptions() const override;
   virtual bool SaveConfig() const override;
   virtual void SetOperationKey(const std::string & key) override;
 
