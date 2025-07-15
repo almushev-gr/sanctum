@@ -262,7 +262,11 @@ FileOperationResult DefaultCore::Put(const std::wstring & path)
   {
     std::filesystem::path absPath = m_workDir / putPath;
 
-    if (putPath.parent_path().empty()) // просто имя файла
+    if (std::filesystem::is_directory(absPath))
+    {
+      result = PutDirByAbsPath(absPath);
+    }
+    else if (putPath.parent_path().empty()) // просто имя файла
     {
       std::vector<std::filesystem::path> foundFiles = FindFilesInWorkDir(putPath.filename());
      
@@ -281,10 +285,6 @@ FileOperationResult DefaultCore::Put(const std::wstring & path)
         [](const std::filesystem::path & nextPath) { return nextPath.wstring();});
         result.opResult = OperationResult::AmbiguousInput;
       }
-    }
-    else if (std::filesystem::is_directory(absPath))
-    {
-      result = PutFileByAbsPath(absPath);
     }
     else
     {
@@ -516,8 +516,22 @@ std::filesystem::path DefaultCore::GetDirInSanctum(const std::filesystem::path &
 ContentsOperationResult DefaultCore::GetFileDescriptions() const 
 {
   ContentsOperationResult result;
+  OperationResult checkKeyResult = CheckKey();
+
+  if (checkKeyResult != OperationResult::Ok)
+  {
+    m_operationKey.clear();
+    result.opResult = checkKeyResult;
+    return result;
+  }
+  else 
+  {
+    m_keyHash = std::hash<std::string>{}(GetKey());
+  }
+ 
   result.opResult = OperationResult::Ok;
   result.descs = m_contentsTable.GetDescriptions();
+  m_operationKey.clear();
   return result;
 }
 

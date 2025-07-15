@@ -32,9 +32,9 @@ private:
   std::filesystem::path m_sanctumPath; ///< путь к хранилищу (с закоммиченными изменениями)
   std::unique_ptr<sanctum::encrypter::IfEncrypter> m_encrypter; ///< шифровальщик данных (всегда есть)
   ContentsTable m_contentsTable; ///< оглавление хранилища
-  std::string m_operationKey; ///< ключ шифрования для одной операции
+  mutable std::string m_operationKey; ///< ключ шифрования для одной операции
   std::string m_permanentKey; ///< постоянный ключ шифрования 
-  size_t m_keyHash; ///< хеш используемого ключа
+  mutable size_t m_keyHash; ///< хеш используемого ключа
 
   // способ размещения файла в хранилище
   enum class PutFileMethod
