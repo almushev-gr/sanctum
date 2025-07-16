@@ -2,6 +2,7 @@
 #include "IfCommand.h"
 #include <IfSanctumCore.h>
 #include <optional>
+#include <map>
 
 
 namespace sanctum
@@ -36,6 +37,8 @@ protected:
   bool EnterOperationKey();
   std::optional<std::wstring> ResolveAmbiguousInput(const std::vector<std::wstring> & inputs) const;
   void MakeMessagesForNegativeResult(core::OperationResult result);
+  std::map<std::wstring, std::wstring> GetOptions(const std::vector<std::wstring> & params) const;
+
 };
 
 }

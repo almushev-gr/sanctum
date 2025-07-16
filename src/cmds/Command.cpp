@@ -150,4 +150,44 @@ void Command::AddFailMessageStrings(const std::vector<std::wstring> & strs)
   std::copy(strs.begin(), strs.end(), std::back_inserter(m_failMessage));
 }
 
+
+//----------------------------------------------------------
+/*
+  Выбрать ключи (с параметрами, если есть)
+*/
+//---
+std::map<std::wstring,std::wstring> Command::GetOptions(const std::vector<std::wstring> & params) const
+{
+  std::map<std::wstring,std::wstring> result;
+  std::wstring currentOption;
+
+  for (auto && nextParam : params)
+  {
+    if (!nextParam.empty() && nextParam[0] == L'-')
+    {
+      if (currentOption.empty())
+      {
+        currentOption = nextParam.substr(1, nextParam.size() - 1);
+      }
+      else
+      {
+        result[currentOption] = L"";
+        currentOption = nextParam.substr(1, nextParam.size() - 1);
+      }
+    }
+    else if (!currentOption.empty()) // параметр текущей опции
+    {
+      result[currentOption] = nextParam;
+      currentOption.clear();
+    }
+  }
+
+  if (!currentOption.empty())
+  {
+    result[currentOption] = L"";
+  }
+
+  return result;
+}
+
 }
