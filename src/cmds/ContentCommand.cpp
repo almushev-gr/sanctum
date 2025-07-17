@@ -69,9 +69,7 @@ void SortResultDescriptions(core::ContentsOperationResult & result)
 
 
 // todo:
-// нужен флажок -ver (узнать текущую версию файла)
 // нужен флажок фильтра по имени файла -f
-// нужен флажок фильтра по директории -d
 // хорошо бы показать общее количество файлов в хранилище
 
 
@@ -114,7 +112,9 @@ bool ContentCommand::Run(const std::vector<std::wstring> & params)
     }
     else
     {
+      table.TurnOnUnderSeparator();
       AddSuccessMessageStrings(table.GetPrintStrings());
+      AddSuccessMessageStrings({L"Total files: " + std::to_wstring(result.descs.size())});
     }
    
     return true;
@@ -181,6 +181,16 @@ void ContentCommand::ApplyOptionsToResult(const std::vector<std::wstring> & para
                                  [&maxVersions](const core::FileDescription & nextDesc) 
                                  {  
                                   return nextDesc.version < maxVersions[{nextDesc.dirName, nextDesc.name}];
+                                 }),
+                  result.descs.end());
+  }
+  
+  if (opts.count(L"f") && !opts[L"f"].empty())
+  {
+    result.descs.erase(std::remove_if(result.descs.begin(), result.descs.end(),
+                                 [&opts](const core::FileDescription & nextDesc) 
+                                 {  
+                                  return nextDesc.name.find(opts[L"f"]) == std::wstring::npos;
                                  }),
                   result.descs.end());
   }

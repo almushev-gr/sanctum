@@ -120,6 +120,11 @@ std::vector<std::wstring> ConsoleTable::GetPrintStrings()
     printStrings.push_back(MakeString(m_lines[i], columnWidth));
   }
 
+  if (m_underSeparator)
+  {
+    printStrings.push_back(separatorString);
+  }
+
   return printStrings;
 }
 
