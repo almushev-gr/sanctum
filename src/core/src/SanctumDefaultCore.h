@@ -74,6 +74,7 @@ private:
   void LoadConfig();
   OperationResult CheckKey() const;
   std::string GetKey() const;
+  OperationResult RemoveFromDisk(const std::vector<std::wstring> & paths);
 
 };
 

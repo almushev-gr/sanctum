@@ -463,6 +463,11 @@ FileOperationResult DefaultCore::PutDirByAbsPath(const std::filesystem::path & p
     }
 
     result = PutFiles(filesInSanctum, PutFileMethod::Append);
+
+    if (result.opResult == OperationResult::Ok)
+    {
+      result.opResult = RemoveFromDisk({putPath.wstring()});
+    }
   } 
   catch (const std::filesystem::filesystem_error& err) 
   {
@@ -668,6 +673,19 @@ FileOperationResult DefaultCore::PutFiles(std::vector<FileInsideSanctum> & files
   }
 
   fantomFile->close();
+
+  if (result.opResult == OperationResult::Ok)
+  {
+    std::vector<std::wstring> pathsToRemove;
+    
+    for (auto && nextFile : filesInSanctum)
+    {
+      pathsToRemove.push_back(nextFile.GetFullPath());
+    }
+
+    result.opResult = RemoveFromDisk(pathsToRemove);
+  }
+
   return result;
 }
 
@@ -683,22 +701,27 @@ OperationResult DefaultCore::Commit()
   {
     return OperationResult::NoSanctum;
   }
+ 
+  OperationResult result = OperationResult::Ok;
 
-  try 
+  if (std::filesystem::exists(m_sanctumPath))
   {
-    if (std::filesystem::exists(m_sanctumPath))
-    {
-      std::filesystem::remove(m_sanctumPath);
-    }
-   
-    std::filesystem::rename(GetRelevantPath(), m_sanctumPath);
-  } 
-  catch (const std::filesystem::filesystem_error& e)
-  {
-    return OperationResult::FileSystemError;  
+    result = RemoveFromDisk({m_sanctumPath.wstring()});
   }
-  
-  return OperationResult::Ok;
+
+  if (result == OperationResult::Ok)
+  {
+    try
+    {
+      std::filesystem::rename(GetRelevantPath(), m_sanctumPath);
+    } 
+    catch (const std::filesystem::filesystem_error& e)
+    {
+      result = OperationResult::RenameFileError;  
+    }
+  }
+   
+  return result;
 }
 
 
@@ -846,6 +869,29 @@ void DefaultCore::LoadConfig()
 void DefaultCore::SetOperationKey(const std::string & key)
 {
   m_operationKey = key;
+}
+
+
+//----------------------------------------------------------
+/*
+  Удалить файлы с диска
+*/
+//---
+OperationResult DefaultCore::RemoveFromDisk(const std::vector<std::wstring> & paths)
+{
+  try 
+  {
+    for (auto && nextPath : paths)
+    {
+      std::filesystem::remove_all(nextPath);
+    }
+  } 
+  catch (std::filesystem::filesystem_error & er) 
+  {
+    return OperationResult::RemoveFileError;
+  }
+
+  return OperationResult::Ok;
 }
 
 

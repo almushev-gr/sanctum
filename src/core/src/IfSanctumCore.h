@@ -20,7 +20,8 @@ enum class OperationResult
   KeyHashDismatch, // несовпадение хеша ключа и хеша в ядре
   KeyRequired, // требуется ключ для шифрации
   UnknownError,
-  FileSystemError,
+  RemoveFileError,
+  RenameFileError,
   Ok
 };
 

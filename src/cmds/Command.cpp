@@ -44,8 +44,12 @@ void Command::MakeMessagesForNegativeResult(core::OperationResult result)
       m_failMessage.emplace_back(L"Key hash mismatch. Clear hash or enter suitable key");
     break;
 
-    case core::OperationResult::FileSystemError:
-      m_failMessage.emplace_back(L"Filesystem error");
+    case core::OperationResult::RemoveFileError:
+      m_failMessage.emplace_back(L"Filesystem: cant remove files");
+    break;
+
+    case core::OperationResult::RenameFileError:
+      m_failMessage.emplace_back(L"Filesystem: cant rename files");
     break;
 
     default:
