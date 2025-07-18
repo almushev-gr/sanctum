@@ -681,15 +681,23 @@ OperationResult DefaultCore::Commit()
 {
   if (m_sanctumPath == GetRelevantPath())
   {
-    return OperationResult::Ok; // нечего коммитить
+    return OperationResult::NoSanctum;
   }
 
-  if (std::filesystem::exists(m_sanctumPath))
+  try 
   {
-    std::filesystem::remove(m_sanctumPath);
-  }
+    if (std::filesystem::exists(m_sanctumPath))
+    {
+      std::filesystem::remove(m_sanctumPath);
+    }
    
-  std::filesystem::rename(GetRelevantPath(), m_sanctumPath);
+    std::filesystem::rename(GetRelevantPath(), m_sanctumPath);
+  } 
+  catch (const std::filesystem::filesystem_error& e)
+  {
+    return OperationResult::FileSystemError;  
+  }
+  
   return OperationResult::Ok;
 }
 

@@ -23,6 +23,8 @@ add_executable(${exe_target}
     "src/cmds/Command.cpp"
     "src/cmds/ContentCommand.h"
     "src/cmds/ContentCommand.cpp"
+    "src/cmds/CommitCommand.h"
+    "src/cmds/CommitCommand.cpp"
     "src/core/src/IfSanctumCore.h"
     "src/cmds/ConsoleTable.h"
     "src/cmds/ConsoleTable.cpp"

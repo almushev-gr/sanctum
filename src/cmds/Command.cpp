@@ -44,6 +44,10 @@ void Command::MakeMessagesForNegativeResult(core::OperationResult result)
       m_failMessage.emplace_back(L"Key hash mismatch. Clear hash or enter suitable key");
     break;
 
+    case core::OperationResult::FileSystemError:
+      m_failMessage.emplace_back(L"Filesystem error");
+    break;
+
     default:
       m_failMessage.emplace_back(L"Command failed. Unknown error");
   }
