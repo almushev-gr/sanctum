@@ -5,6 +5,7 @@
 #include "SaveConfigCommand.h"
 #include "ContentCommand.h"
 #include "CommitCommand.h"
+#include "GetCommand.h"
 #include <algorithm>
 
 
@@ -25,6 +26,7 @@ CommandNomenclature::CommandNomenclature(core::IfSanctumCore & core)
   m_cmds.emplace_back(std::make_unique<SaveConfigCommand>(*m_core));
   m_cmds.emplace_back(std::make_unique<ContentCommand>(*m_core));
   m_cmds.emplace_back(std::make_unique<CommitCommand>(*m_core));
+  m_cmds.emplace_back(std::make_unique<GetCommand>(*m_core));
 }
 
 

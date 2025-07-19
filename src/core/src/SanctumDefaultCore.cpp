@@ -122,34 +122,97 @@ OperationResult DefaultCore::SetWorkFile(const std::wstring & fileFullPath)
   Взять файл из хранилища
 */
 //---
-FileOperationResult DefaultCore::Get(const std::wstring & path)
+FileOperationResult DefaultCore::Get(const std::wstring & getPath)
 {
-  if (path.empty())
+  FileOperationResult result;
+
+  if (getPath.empty())
   {
-    FileOperationResult result;
     result.opResult = OperationResult::NoSuchFileOrDir;
     return result;
   }
-  
-  std::filesystem::path filePath(path);
-  std::filesystem::path fileName = filePath.filename();
+
+  OperationResult checkKeyResult = CheckKey();
+
+  if (checkKeyResult != OperationResult::Ok)
+  {
+    m_operationKey.clear();
+    result.opResult = checkKeyResult;
+    return result;
+  }
+  else 
+  {
+    m_keyHash = std::hash<std::string>{}(GetKey());
+  }
+
+  std::filesystem::path filePath(getPath);
+  std::filesystem::path fileOrDirName = filePath.filename();
   std::filesystem::path dirInSanctum = filePath.parent_path();
+  result.opResult = OperationResult::Ok;
 
-  if (m_contentsTable.IsFileExist(dirInSanctum, fileName))
+  if (m_contentsTable.IsFileExist(dirInSanctum, fileOrDirName))
   {
-    return GetFile(dirInSanctum, fileName);
+    result = GetFile(dirInSanctum, fileOrDirName);
   }
-  /*
-  else if (m_contentTable.ExistDir(path)) 
+  else if (m_contentsTable.IsDirExist(getPath))
   {
-    return GetDir(path);
+    result = GetDir(getPath);
+  }
+  else  
+  {
+    std::set<std::filesystem::path> dirs = m_contentsTable.GetDirsContainsString(getPath);
+    std::set<std::filesystem::path> files = m_contentsTable.GetFilesContainsString(getPath);
+    size_t varCount = dirs.size() + files.size();
+    
+    if (varCount == 0)
+    {
+      result.problemFiles.push_back(getPath);
+      result.opResult = OperationResult::NoSuchFileOrDir;
+    }
+    else if (varCount == 1 && !dirs.empty())
+    {
+      result = GetDir(dirs.begin()->wstring());
+    }
+    else if (varCount == 1 && !files.empty())
+    {
+      result = GetFile(files.begin()->parent_path(), files.begin()->filename());
+    }
+    else // неоднозначность. нужно уточнить у пользователя
+    {
+      std::transform(dirs.begin(), dirs.end(), std::back_inserter(result.ambiguousFiles), 
+        [](const std::filesystem::path & nextPath) { return nextPath.wstring();});
+      std::transform(files.begin(), files.end(), std::back_inserter(result.ambiguousFiles), 
+        [](const std::filesystem::path & nextPath) { return nextPath.wstring();});
+
+      result.opResult = OperationResult::AmbiguousInput;
+    }
   }
 
-  return GetFileByName(fileName);
-  */
+  m_operationKey.clear();
+  return result;
+}
 
+
+//----------------------------------------------------------
+/*
+  Получить директорию из хранилища
+*/
+//---
+FileOperationResult DefaultCore::GetDir(const std::wstring & dirPath)
+{
   FileOperationResult result;
   result.opResult = OperationResult::NoSuchFileOrDir;
+
+  for (auto && nextDesc : m_contentsTable.GetFilesInDir(dirPath))
+  {
+    result = GetFile(nextDesc.dirName, nextDesc.name);
+
+    if (result.opResult != OperationResult::Ok)
+    {
+      break;
+    }
+  }
+
   return result;
 }
 
@@ -162,10 +225,12 @@ FileOperationResult DefaultCore::Get(const std::wstring & path)
 FileOperationResult DefaultCore::GetFile(const std::filesystem::path & dirInSanctum, const std::filesystem::path & fileName) const
 {
   FileOperationResult result;
-  std::filesystem::path finalPath = m_workDir / dirInSanctum / fileName;
+  std::filesystem::path pathInSanctum = dirInSanctum / fileName;
+  std::filesystem::path finalPath = m_workDir / pathInSanctum;
 
   if (std::filesystem::exists(finalPath))
   {
+    result.problemFiles.push_back(pathInSanctum.wstring());
     result.opResult = OperationResult::FileAlreadyExist;
     return result;
   }
@@ -174,6 +239,7 @@ FileOperationResult DefaultCore::GetFile(const std::filesystem::path & dirInSanc
 
   if (!actualFileDesc)
   {
+    result.problemFiles.push_back(pathInSanctum.wstring());
     result.opResult = OperationResult::NoSuchFileOrDir;
     return result;
   }
@@ -198,11 +264,13 @@ FileOperationResult DefaultCore::GetFile(const std::filesystem::path & dirInSanc
     }
     else
     {
+      result.problemFiles.push_back(pathInSanctum.wstring());
       result.opResult = OperationResult::FileProcessFail;
     }
   }
   else
   {
+    result.problemFiles.push_back(pathInSanctum.wstring());
     result.opResult = OperationResult::FileProcessFail;
   }
   
@@ -647,6 +715,7 @@ FileOperationResult DefaultCore::PutFiles(std::vector<FileInsideSanctum> & files
   }
 
   result.opResult = OperationResult::Ok;
+  fantomFile->seekp(0, std::ios_base::end);
   
   for (auto && nextFile : filesInSanctum)
   {

@@ -120,7 +120,16 @@ bool FileInsideSanctum::ReadFrom(std::ifstream & input, FileReadMode mode, sanct
 bool FileInsideSanctum::SaveTo(const std::filesystem::path & dirPath) const
 {
   std::filesystem::path finalPath = dirPath / m_dirInSanctum / m_name;
-  std::filesystem::create_directories(dirPath / m_dirInSanctum);
+
+  try 
+  {
+    std::filesystem::create_directories(dirPath / m_dirInSanctum);
+  }
+  catch (const std::filesystem::filesystem_error& ex)
+  {
+    return false;
+  }
+
   std::ofstream output(finalPath.wstring().c_str(), std::ios::binary);
   
   if (output.is_open()) 

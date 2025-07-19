@@ -75,6 +75,7 @@ private:
   OperationResult CheckKey() const;
   std::string GetKey() const;
   OperationResult RemoveFromDisk(const std::vector<std::wstring> & paths);
+  FileOperationResult GetDir(const std::wstring & dirPath);
 
 };
 
