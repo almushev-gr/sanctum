@@ -26,6 +26,8 @@ add_executable(${exe_target}
     "src/cmds/ContentCommand.cpp"
     "src/cmds/CommitCommand.h"
     "src/cmds/CommitCommand.cpp"
+    "src/cmds/EncryptorCommand.h"
+    "src/cmds/EncryptorCommand.cpp"
     "src/cmds/GetCommand.h"
     "src/cmds/GetCommand.cpp"
     "src/core/src/IfSanctumCore.h"

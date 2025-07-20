@@ -1,3 +1,7 @@
+#include <iostream>
+#include <windows.h>
+#define ENCRYPTOR_FUNC extern "C" __declspec(dllexport)
+
 #include "XorEncrypter.h"
 
 
@@ -72,20 +76,23 @@ KeyPolicy XorEncrypter::GetKeyPolicy() const
   Получить имя шифратора
 */
 //---
-std::string XorEncrypter::GetName() const
+std::wstring XorEncrypter::GetName() const
 {
-  return "xor";
+  return L"xor";
 }
 
 
 //----------------------------------------------------------
 /*
-  Создать шифратор
+  Получить шифратор
 */
 //---
-std::unique_ptr<IfEncrypter> Create()
+IfEncrypter * GetEncrypter()
 {
-  return std::make_unique<XorEncrypter>();
+  static XorEncrypter encrypter;
+  return &encrypter;
 }
 
 }
+
+

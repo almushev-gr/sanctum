@@ -1,7 +1,6 @@
 #pragma once
 #include <vector>
 #include <string>
-#include <memory>
 
 
 namespace sanctum::encrypter
@@ -30,11 +29,10 @@ struct IfEncrypter
   virtual std::vector<char> Decrypt(const std::vector<char> & bytes, const std::string & key) = 0;
   virtual std::string Decrypt(const std::string & str, const std::string & key) = 0;
   virtual KeyPolicy GetKeyPolicy() const = 0;
-  virtual std::string GetName() const = 0;
+  virtual std::wstring GetName() const = 0;
   virtual ~IfEncrypter() = default;
 };
 
-
-std::unique_ptr<IfEncrypter> Create();
+typedef IfEncrypter * (*GetEncrypterPtr)(); 
 
 }

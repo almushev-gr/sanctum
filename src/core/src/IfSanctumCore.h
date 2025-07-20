@@ -22,6 +22,8 @@ enum class OperationResult
   UnknownError,
   RemoveFileError,
   RenameFileError,
+  OutsideEncrypterAlreadyLoaded, 
+  OutsideEncrypterNotLoaded,
   Ok
 };
 
@@ -71,8 +73,9 @@ struct IfSanctumCore
   virtual FileOperationResult Get(const std::wstring & path) = 0;
   virtual bool SaveConfig() const = 0;
   virtual void SetOperationKey(const std::string & key) = 0;
-  //virtual SetEncryptor
-  //vittual GetEncryptor
+  virtual OperationResult LoadEncrypter(const std::wstring & encPath) = 0;
+  virtual OperationResult UnloadEncrypter() = 0;
+  virtual std::wstring GetEncrypterName() const = 0;
   virtual ContentsOperationResult GetFileDescriptions() = 0;
   virtual OperationResult Commit() = 0;
   virtual ~IfSanctumCore() = default;

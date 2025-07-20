@@ -22,8 +22,11 @@ public:
   virtual std::string Encrypt(const std::string & str, const std::string & key) override;
   virtual std::string Decrypt(const std::string & str, const std::string & key) override;
   virtual KeyPolicy GetKeyPolicy() const override;
-  virtual std::string GetName() const override;
+  virtual std::wstring GetName() const override;
   
 };
+
+
+IfEncrypter * GetEncrypter();
 
 }

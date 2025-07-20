@@ -1,4 +1,5 @@
 #include "SanctumDefaultCore.h"
+#include "DefaultEncrypter.h"
 #include "IfEncrypter.h"
 #include "IfSanctumCore.h"
 #include <pugixml/pugixml.hpp>
@@ -8,6 +9,7 @@
 #include <iostream>
 #include <numeric>
 #include <functional>
+#include <windows.h>
 
 
 namespace 
@@ -25,7 +27,7 @@ namespace sanctum::core
 */
 //---
 DefaultCore::DefaultCore()
-  : m_encrypter(std::make_unique<encrypter::DefaultEncrypter>())
+  : m_encrypter(sanctum::encrypter::GetEncrypter())
   , m_workDir(std::filesystem::current_path())
   , m_workFile()
   , m_sanctumDir(std::filesystem::current_path())
@@ -389,6 +391,16 @@ OperationResult DefaultCore::CheckKey() const
     break;
 
     case sanctum::encrypter::KeyPolicy::KeyForEncryption:
+    {
+      if (GetKey().empty())
+      {
+        result = OperationResult::KeyRequired;
+      }
+      else if (std::hash<std::string>{}(GetKey()) != m_keyHash)
+      {
+        result = OperationResult::KeyHashDismatch;
+      }
+    }
     break;
 
     case sanctum::encrypter::KeyPolicy::NoKey:
@@ -981,6 +993,103 @@ ContentsTable & DefaultCore::GetContentsTable()
   m_contentsTable = std::make_unique<ContentsTable>();
   m_contentsTable->Update(GetRelevantPath(), *m_encrypter, GetKey());
   return *m_contentsTable;
+}
+
+
+//----------------------------------------------------------
+/*
+  Загрузить сторонний шифратор
+*/
+//---
+OperationResult DefaultCore::LoadEncrypter(const std::wstring & encPath)
+{
+  std::filesystem::path dllPath = encPath;
+
+  if (!dllPath.is_absolute())
+  {
+    dllPath = std::filesystem::current_path() / dllPath;
+  }
+
+  if (!std::filesystem::exists(dllPath))
+  {
+    return OperationResult::NoSuchFileOrDir;
+  }
+
+  if (!m_outsideEncrypterPath.empty())
+  {
+    return OperationResult::OutsideEncrypterAlreadyLoaded;
+  }
+
+  HINSTANCE hEnc = ::LoadLibrary(dllPath.string().c_str());
+
+  if (!hEnc)
+  {
+    return OperationResult::UnknownError;
+  }
+
+  m_outsideEncrypterPath = encPath;
+  OperationResult result = OperationResult::UnknownError;
+
+  FARPROC fn = ::GetProcAddress(hEnc, "GetEncrypter");
+
+  if (fn)
+  {
+    sanctum::encrypter::GetEncrypterPtr getEncPtr = (sanctum::encrypter::GetEncrypterPtr)fn;
+    sanctum::encrypter::IfEncrypter * encFromLib = getEncPtr();
+
+    if (encFromLib)
+    {
+      m_encrypter = encFromLib;
+      result = OperationResult::Ok;
+    }
+  }
+
+  if (result != OperationResult::Ok)
+  {
+    UnloadEncrypter();
+  }
+
+  return result;
+}
+
+
+//----------------------------------------------------------
+/*
+  Выгрузить шифратор
+*/
+//---
+OperationResult DefaultCore::UnloadEncrypter()
+{
+  if (m_outsideEncrypterPath.empty())
+  {
+    return OperationResult::OutsideEncrypterNotLoaded;
+  }
+
+  std::string encName = m_outsideEncrypterPath.filename().string();
+  HINSTANCE hEnc = ::GetModuleHandle(encName.c_str());
+
+  if (hEnc)
+  {
+    if (::FreeLibrary(hEnc))
+    {
+      m_outsideEncrypterPath.clear();
+      m_encrypter = encrypter::GetEncrypter();
+      return OperationResult::Ok;
+    }
+  }
+
+  return OperationResult::UnknownError;
+}
+
+
+//----------------------------------------------------------
+/*
+  Получить имя шифратора
+*/
+//---
+std::wstring DefaultCore::GetEncrypterName() const
+{
+  return m_encrypter->GetName();
 }
 
 

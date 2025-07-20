@@ -76,20 +76,21 @@ KeyPolicy DefaultEncrypter::GetKeyPolicy() const
   Получить имя шифратора
 */
 //---
-std::string DefaultEncrypter::GetName() const
+std::wstring DefaultEncrypter::GetName() const
 {
-  return "def";
+  return L"def";
 }
 
 
 //----------------------------------------------------------
 /*
-  Создать шифратор
+  Создать получить шифратор
 */
 //---
-std::unique_ptr<IfEncrypter> Create()
+IfEncrypter * GetEncrypter()
 {
-  return std::make_unique<DefaultEncrypter>();
+  static DefaultEncrypter encrypter;
+  return &encrypter;
 }
 
 }

@@ -30,11 +30,12 @@ private:
   std::filesystem::path m_sanctumDir;  ///< директория с файлом хранилища (если не задана, то текущая)
   std::filesystem::path m_sanctumName; ///< имя файла хранилища (обязательно должно быть задано)
   std::filesystem::path m_sanctumPath; ///< путь к хранилищу (с закоммиченными изменениями)
-  std::unique_ptr<sanctum::encrypter::IfEncrypter> m_encrypter; ///< шифровальщик данных (всегда есть)
+  sanctum::encrypter::IfEncrypter * m_encrypter; ///< шифровальщик данных (всегда есть)
   std::unique_ptr<ContentsTable> m_contentsTable; ///< оглавление хранилища
   mutable std::string m_operationKey; ///< ключ шифрования для одной операции
   std::string m_permanentKey; ///< постоянный ключ шифрования 
   mutable size_t m_keyHash; ///< хеш используемого ключа
+  std::filesystem::path m_outsideEncrypterPath; ///< путь загруженной внешней библиотеки шифратора
 
   // способ размещения файла в хранилище
   enum class PutFileMethod
@@ -59,6 +60,9 @@ public:
   virtual ContentsOperationResult GetFileDescriptions() override;
   virtual bool SaveConfig() const override;
   virtual void SetOperationKey(const std::string & key) override;
+  virtual OperationResult LoadEncrypter(const std::wstring & encPath) override;
+  virtual OperationResult UnloadEncrypter() override;
+  virtual std::wstring GetEncrypterName() const override;
 
 private:
   std::wstring GetFileDirUpTo(const std::wstring & fileName, const std::wstring & dirName);
