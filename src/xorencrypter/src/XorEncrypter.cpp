@@ -1,4 +1,3 @@
-#include <iostream>
 #include <windows.h>
 #define ENCRYPTOR_FUNC extern "C" __declspec(dllexport)
 
@@ -15,8 +14,13 @@ namespace sanctum::encrypter
 //---
 std::vector<char> XorEncrypter::Encrypt(const std::vector<char> & bytes, const std::string & key)
 {
-  std::vector<char> encBytes(bytes);
-  //std::reverse(encBytes.begin(), encBytes.end());
+  std::vector<char> encBytes(bytes.size());
+
+  for (size_t i=0; i<bytes.size(); i++)
+  {
+    encBytes[i] = bytes[i] ^ key[i % key.length()];
+  }
+  
   return encBytes;
 }
 
@@ -28,8 +32,13 @@ std::vector<char> XorEncrypter::Encrypt(const std::vector<char> & bytes, const s
 //---
 std::vector<char> XorEncrypter::Decrypt(const std::vector<char> & bytes, const std::string & key)
 {
-  std::vector<char> decBytes(bytes);
-  //std::reverse(decBytes.begin(), decBytes.end());
+  std::vector<char> decBytes(bytes.size());
+
+  for (size_t i=0; i<bytes.size(); i++)
+  {
+    decBytes[i] = bytes[i] ^ key[i % key.length()];
+  }
+    
   return decBytes;
 }
 

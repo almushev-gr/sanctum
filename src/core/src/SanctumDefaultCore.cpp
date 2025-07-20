@@ -1040,6 +1040,7 @@ OperationResult DefaultCore::LoadEncrypter(const std::wstring & encPath)
     if (encFromLib)
     {
       m_encrypter = encFromLib;
+      m_contentsTable.reset();
       result = OperationResult::Ok;
     }
   }
@@ -1074,6 +1075,7 @@ OperationResult DefaultCore::UnloadEncrypter()
     {
       m_outsideEncrypterPath.clear();
       m_encrypter = encrypter::GetEncrypter();
+      m_contentsTable.reset();
       return OperationResult::Ok;
     }
   }
