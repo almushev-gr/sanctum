@@ -1,6 +1,4 @@
-#include "DefaultEncrypter.h"
-#include "IfEncrypter.h"
-#include <algorithm>
+#include "XorEncrypter.h"
 
 
 namespace sanctum::encrypter
@@ -11,10 +9,10 @@ namespace sanctum::encrypter
   Зашифровать набор байтов
 */
 //---
-std::vector<char> DefaultEncrypter::Encrypt(const std::vector<char> & bytes, const std::string & key)
+std::vector<char> XorEncrypter::Encrypt(const std::vector<char> & bytes, const std::string & key)
 {
   std::vector<char> encBytes(bytes);
-  std::reverse(encBytes.begin(), encBytes.end());
+  //std::reverse(encBytes.begin(), encBytes.end());
   return encBytes;
 }
 
@@ -24,10 +22,10 @@ std::vector<char> DefaultEncrypter::Encrypt(const std::vector<char> & bytes, con
   Расшифровать набор байтов
 */
 //---
-std::vector<char> DefaultEncrypter::Decrypt(const std::vector<char> & bytes, const std::string & key)
+std::vector<char> XorEncrypter::Decrypt(const std::vector<char> & bytes, const std::string & key)
 {
   std::vector<char> decBytes(bytes);
-  std::reverse(decBytes.begin(), decBytes.end());
+  //std::reverse(decBytes.begin(), decBytes.end());
   return decBytes;
 }
 
@@ -37,7 +35,7 @@ std::vector<char> DefaultEncrypter::Decrypt(const std::vector<char> & bytes, con
   Зашифровать строку
 */
 //---
-std::string DefaultEncrypter::Encrypt(const std::string & str, const std::string & key)
+std::string XorEncrypter::Encrypt(const std::string & str, const std::string & key)
 {
   std::vector<char> strAsVector(str.begin(), str.end());
   std::vector<char> encBytes = Encrypt(strAsVector, key);
@@ -50,7 +48,7 @@ std::string DefaultEncrypter::Encrypt(const std::string & str, const std::string
   Расшифровать строку
 */
 //---
-std::string DefaultEncrypter::Decrypt(const std::string & str, const std::string & key)
+std::string XorEncrypter::Decrypt(const std::string & str, const std::string & key)
 {
   std::vector<char> strAsVector(str.begin(), str.end());
   std::vector<char> decBytes = Decrypt(strAsVector, key);
@@ -61,13 +59,11 @@ std::string DefaultEncrypter::Decrypt(const std::string & str, const std::string
 //----------------------------------------------------------
 /*
   Получить политику работы с ключом
-  В умолчательном шифраторе используется слабая защита
-  внешним ключом-паролем на уровне ядра
 */
 //---
-KeyPolicy DefaultEncrypter::GetKeyPolicy() const
+KeyPolicy XorEncrypter::GetKeyPolicy() const
 {
-  return KeyPolicy::KeyForCall;
+  return KeyPolicy::KeyForEncryption;
 }
 
 
@@ -76,9 +72,9 @@ KeyPolicy DefaultEncrypter::GetKeyPolicy() const
   Получить имя шифратора
 */
 //---
-std::string DefaultEncrypter::GetName() const
+std::string XorEncrypter::GetName() const
 {
-  return "def";
+  return "xor";
 }
 
 
@@ -89,7 +85,7 @@ std::string DefaultEncrypter::GetName() const
 //---
 std::unique_ptr<IfEncrypter> Create()
 {
-  return std::make_unique<DefaultEncrypter>();
+  return std::make_unique<XorEncrypter>();
 }
 
 }

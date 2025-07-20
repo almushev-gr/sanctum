@@ -36,7 +36,6 @@ DefaultCore::DefaultCore()
 {
   LoadConfig();
   m_sanctumPath = m_sanctumDir / m_sanctumName;
-  m_contentsTable.Update(GetRelevantPath(), *m_encrypter);
 }
 
 
@@ -150,18 +149,18 @@ FileOperationResult DefaultCore::Get(const std::wstring & getPath)
   std::filesystem::path dirInSanctum = filePath.parent_path();
   result.opResult = OperationResult::Ok;
 
-  if (m_contentsTable.IsFileExist(dirInSanctum, fileOrDirName))
+  if (GetContentsTable().IsFileExist(dirInSanctum, fileOrDirName))
   {
     result = GetFile(dirInSanctum, fileOrDirName);
   }
-  else if (m_contentsTable.IsDirExist(getPath))
+  else if (GetContentsTable().IsDirExist(getPath))
   {
     result = GetDir(getPath);
   }
   else  
   {
-    std::set<std::filesystem::path> dirs = m_contentsTable.GetDirsContainsString(getPath);
-    std::set<std::filesystem::path> files = m_contentsTable.GetFilesContainsString(getPath);
+    std::set<std::filesystem::path> dirs = GetContentsTable().GetDirsContainsString(getPath);
+    std::set<std::filesystem::path> files = GetContentsTable().GetFilesContainsString(getPath);
     size_t varCount = dirs.size() + files.size();
     
     if (varCount == 0)
@@ -203,7 +202,7 @@ FileOperationResult DefaultCore::GetDir(const std::wstring & dirPath)
   FileOperationResult result;
   result.opResult = OperationResult::NoSuchFileOrDir;
 
-  for (auto && nextDesc : m_contentsTable.GetFilesInDir(dirPath))
+  for (auto && nextDesc : GetContentsTable().GetFilesInDir(dirPath))
   {
     result = GetFile(nextDesc.dirName, nextDesc.name);
 
@@ -222,7 +221,7 @@ FileOperationResult DefaultCore::GetDir(const std::wstring & dirPath)
   Получить файл из хранилища
 */
 //---
-FileOperationResult DefaultCore::GetFile(const std::filesystem::path & dirInSanctum, const std::filesystem::path & fileName) const
+FileOperationResult DefaultCore::GetFile(const std::filesystem::path & dirInSanctum, const std::filesystem::path & fileName)
 {
   FileOperationResult result;
   std::filesystem::path pathInSanctum = dirInSanctum / fileName;
@@ -235,7 +234,7 @@ FileOperationResult DefaultCore::GetFile(const std::filesystem::path & dirInSanc
     return result;
   }
 
-  std::optional<FileDescription> actualFileDesc = m_contentsTable.GetActual(dirInSanctum, fileName);
+  std::optional<FileDescription> actualFileDesc = GetContentsTable().GetActual(dirInSanctum, fileName);
 
   if (!actualFileDesc)
   {
@@ -256,7 +255,7 @@ FileOperationResult DefaultCore::GetFile(const std::filesystem::path & dirInSanc
   sanctumFile.seekg(actualFileDesc->offset);
   FileInsideSanctum fileInSanctum;
 
-  if (fileInSanctum.ReadFrom(sanctumFile, FileInsideSanctum::FileReadMode::Full, *m_encrypter))
+  if (fileInSanctum.ReadFrom(sanctumFile, FileInsideSanctum::FileReadMode::Full, *m_encrypter, GetKey()))
   {
     if (fileInSanctum.SaveTo(m_workDir))
     {
@@ -479,7 +478,7 @@ FileOperationResult DefaultCore::PutFileByAbsPath(const std::filesystem::path & 
     FileInsideSanctum putFile;
     putFile.SetFullPath(putPath);
     putFile.SetDirInSanctum(dirInSanctum.wstring());
-    int fileVersion = m_contentsTable.GetFileNextVersion(dirInSanctum.wstring(), putPath.filename().wstring());
+    int fileVersion = GetContentsTable().GetFileNextVersion(dirInSanctum.wstring(), putPath.filename().wstring());
     putFile.SetVersion(fileVersion);
     std::vector<FileInsideSanctum> putFiles{putFile};
     result = PutFiles(putFiles, PutFileMethod::Append);
@@ -525,7 +524,7 @@ FileOperationResult DefaultCore::PutDirByAbsPath(const std::filesystem::path & p
         nextFile = entry.path();
         std::wstring insideDirPath = GetFileDirUpTo(nextFile.wstring(), putPath.filename().wstring());
         std::wstring dirInSanctumFullPath = dirInSanctum / insideDirPath;
-        int version = m_contentsTable.GetFileNextVersion(dirInSanctumFullPath, entry.path().filename());
+        int version = GetContentsTable().GetFileNextVersion(dirInSanctumFullPath, entry.path().filename());
         filesInSanctum.emplace_back(entry.path().wstring(), dirInSanctumFullPath, version);
       }
     }
@@ -586,7 +585,7 @@ std::filesystem::path DefaultCore::GetDirInSanctum(const std::filesystem::path &
   Получить описания файла
 */
 //---
-ContentsOperationResult DefaultCore::GetFileDescriptions() const 
+ContentsOperationResult DefaultCore::GetFileDescriptions()
 {
   ContentsOperationResult result;
   OperationResult checkKeyResult = CheckKey();
@@ -603,7 +602,7 @@ ContentsOperationResult DefaultCore::GetFileDescriptions() const
   }
  
   result.opResult = OperationResult::Ok;
-  result.descs = m_contentsTable.GetDescriptions();
+  result.descs = GetContentsTable().GetDescriptions();
   m_operationKey.clear();
   return result;
 }
@@ -620,8 +619,8 @@ OperationResult DefaultCore::SetSanctumName(const std::wstring & name)
 {
   m_sanctumName = name;
   m_sanctumPath = m_sanctumDir / m_sanctumName;
-  m_contentsTable.Update(GetRelevantPath(), *m_encrypter);
-  
+  m_contentsTable.reset();
+    
   return OperationResult::Ok;
 }
 
@@ -637,7 +636,7 @@ OperationResult DefaultCore::SetSanctumDir(const std::wstring & dirFullPath)
   {
     m_sanctumDir = dirFullPath;
     m_sanctumPath = m_sanctumDir / m_sanctumName;
-    m_contentsTable.Update(GetRelevantPath(), *m_encrypter);
+    m_contentsTable.reset();
     return OperationResult::Ok;
   }
 
@@ -719,14 +718,14 @@ FileOperationResult DefaultCore::PutFiles(std::vector<FileInsideSanctum> & files
   
   for (auto && nextFile : filesInSanctum)
   {
-    if (nextFile.WriteTo(*fantomFile, *m_encrypter))
+    if (nextFile.WriteTo(*fantomFile, *m_encrypter, GetKey()))
     {
       FileDescription newDesc;
       newDesc.version = nextFile.GetVersion();
       newDesc.name = nextFile.GetName();
       newDesc.dirName = nextFile.GetDirName();
       newDesc.offset = nextFile.GetOffset();
-      m_contentsTable.AddFile(newDesc);
+      GetContentsTable().AddFile(newDesc);
     }
     else
     {
@@ -961,6 +960,27 @@ OperationResult DefaultCore::RemoveFromDisk(const std::vector<std::wstring> & pa
   }
 
   return OperationResult::Ok;
+}
+
+
+//----------------------------------------------------------
+/*
+  Получить оглавление хранилища
+  Вызывающий код должен обеспечить наличие ключа шифрации
+  Фактически доступ к содержанию возможен только
+  при его наличии
+*/
+//---
+ContentsTable & DefaultCore::GetContentsTable()
+{
+  if (m_contentsTable)
+  {
+    return *m_contentsTable;
+  }
+
+  m_contentsTable = std::make_unique<ContentsTable>();
+  m_contentsTable->Update(GetRelevantPath(), *m_encrypter, GetKey());
+  return *m_contentsTable;
 }
 
 

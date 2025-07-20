@@ -73,7 +73,7 @@ struct IfSanctumCore
   virtual void SetOperationKey(const std::string & key) = 0;
   //virtual SetEncryptor
   //vittual GetEncryptor
-  virtual ContentsOperationResult GetFileDescriptions() const = 0;
+  virtual ContentsOperationResult GetFileDescriptions() = 0;
   virtual OperationResult Commit() = 0;
   virtual ~IfSanctumCore() = default;
 };

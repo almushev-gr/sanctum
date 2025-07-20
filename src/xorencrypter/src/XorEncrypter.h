@@ -1,5 +1,5 @@
 #pragma once
-#include <IfEncrypter.h>
+#include "IfEncrypter.h"
 
 
 namespace sanctum::encrypter
@@ -7,15 +7,14 @@ namespace sanctum::encrypter
 
 //----------------------------------------------------------
 /*
-  Шифровальщик данных по-умолчанию
-  Используется, если не задан другой шифровальщик
+  Шифровальщик данных с xor-шифрацией
 */
 //---
-class DefaultEncrypter : public IfEncrypter
+class XorEncrypter : public IfEncrypter
 {
 public:
-  DefaultEncrypter() = default;
-  virtual ~DefaultEncrypter() = default;
+  XorEncrypter() = default;
+  virtual ~XorEncrypter() = default;
 
   virtual std::vector<char> Encrypt(const std::vector<char> & bytes, const std::string & key) override;
   virtual std::vector<char> Decrypt(const std::vector<char> & bytes, const std::string & key) override;

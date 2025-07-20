@@ -14,7 +14,7 @@ namespace sanctum::core
   Обновить оглавление хранилища
 */
 //---
-void ContentsTable::Update(const std::filesystem::path & sanctumPath, sanctum::encrypter::IfEncrypter & encrypter)
+void ContentsTable::Update(const std::filesystem::path & sanctumPath, sanctum::encrypter::IfEncrypter & encrypter, const std::string & key)
 {
    m_fileDescs.clear();
    m_dirs.clear();
@@ -38,7 +38,7 @@ void ContentsTable::Update(const std::filesystem::path & sanctumPath, sanctum::e
   {
     FileInsideSanctum nextFile;
         
-    if (nextFile.ReadFrom(sanctumFile, FileInsideSanctum::FileReadMode::HeaderOnly, encrypter))
+    if (nextFile.ReadFrom(sanctumFile, FileInsideSanctum::FileReadMode::HeaderOnly, encrypter, key))
     {
       FileDescription nextDesc;
       nextDesc.offset = nextFile.GetOffset();

@@ -31,7 +31,7 @@ private:
   std::filesystem::path m_sanctumName; ///< имя файла хранилища (обязательно должно быть задано)
   std::filesystem::path m_sanctumPath; ///< путь к хранилищу (с закоммиченными изменениями)
   std::unique_ptr<sanctum::encrypter::IfEncrypter> m_encrypter; ///< шифровальщик данных (всегда есть)
-  ContentsTable m_contentsTable; ///< оглавление хранилища
+  std::unique_ptr<ContentsTable> m_contentsTable; ///< оглавление хранилища
   mutable std::string m_operationKey; ///< ключ шифрования для одной операции
   std::string m_permanentKey; ///< постоянный ключ шифрования 
   mutable size_t m_keyHash; ///< хеш используемого ключа
@@ -56,7 +56,7 @@ public:
   virtual FileOperationResult Put(const std::wstring & path) override;
   virtual FileOperationResult Get(const std::wstring & path) override;
   virtual OperationResult Commit() override;
-  virtual ContentsOperationResult GetFileDescriptions() const override;
+  virtual ContentsOperationResult GetFileDescriptions() override;
   virtual bool SaveConfig() const override;
   virtual void SetOperationKey(const std::string & key) override;
 
@@ -68,7 +68,7 @@ private:
   FileOperationResult PutFiles(std::vector<FileInsideSanctum> & fileDescs, PutFileMethod method);
   FileOperationResult PutFileByAbsPath(const std::filesystem::path & putPath);
   FileOperationResult PutDirByAbsPath(const std::filesystem::path & putPath);
-  FileOperationResult GetFile(const std::filesystem::path & dirInSanctum, const std::filesystem::path & fileName) const;
+  FileOperationResult GetFile(const std::filesystem::path & dirInSanctum, const std::filesystem::path & fileName);
   std::filesystem::path GetDirInSanctum(const std::filesystem::path & absPath) const;
   std::vector<std::filesystem::path> FindFilesInWorkDir(const std::filesystem::path & fileName);
   void LoadConfig();
@@ -76,6 +76,7 @@ private:
   std::string GetKey() const;
   OperationResult RemoveFromDisk(const std::vector<std::wstring> & paths);
   FileOperationResult GetDir(const std::wstring & dirPath);
+  ContentsTable & GetContentsTable();
 
 };
 

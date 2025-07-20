@@ -80,11 +80,11 @@ FileInsideSanctum::FileInsideSanctum(const std::wstring & fullPath, const std::w
   Прочитать файл из потока
 */
 //---
-bool FileInsideSanctum::ReadFrom(std::ifstream & input, FileReadMode mode, sanctum::encrypter::IfEncrypter & encrypter)
+bool FileInsideSanctum::ReadFrom(std::ifstream & input, FileReadMode mode, sanctum::encrypter::IfEncrypter & encrypter, const std::string & key)
 {
   m_offset = input.tellg();
 
-  if (!ReadHeaderFrom(input, encrypter))
+  if (!ReadHeaderFrom(input, encrypter, key))
   {
     return false;
   }
@@ -105,7 +105,7 @@ bool FileInsideSanctum::ReadFrom(std::ifstream & input, FileReadMode mode, sanct
   {
     m_content.resize(*m_contentSize);
     input.read(m_content.data(), *m_contentSize);
-    m_content = encrypter.Decrypt(m_content);
+    m_content = encrypter.Decrypt(m_content, key);
   }
 
   return true;
@@ -148,7 +148,7 @@ bool FileInsideSanctum::SaveTo(const std::filesystem::path & dirPath) const
   Прочитать заголовок из потока
 */
 //---
-bool FileInsideSanctum::ReadHeaderFrom(std::ifstream & input, sanctum::encrypter::IfEncrypter & encrypter)
+bool FileInsideSanctum::ReadHeaderFrom(std::ifstream & input, sanctum::encrypter::IfEncrypter & encrypter, const std::string & key)
 {
   input.read(reinterpret_cast<char *>(&m_version), sizeof(int));
 
@@ -161,7 +161,7 @@ bool FileInsideSanctum::ReadHeaderFrom(std::ifstream & input, sanctum::encrypter
   input.read(reinterpret_cast<char *>(&dirNameLength), sizeof(size_t));
 
   std::string encDirName = ReadStringFromStream(input, dirNameLength);
-  std::string decDirName = encrypter.Decrypt(encDirName);
+  std::string decDirName = encrypter.Decrypt(encDirName, key);
   std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
   m_dirInSanctum = converter.from_bytes(decDirName);
 
@@ -169,7 +169,7 @@ bool FileInsideSanctum::ReadHeaderFrom(std::ifstream & input, sanctum::encrypter
   input.read(reinterpret_cast<char *>(&fileNameLength), sizeof(size_t));
 
   std::string encFileName = ReadStringFromStream(input, fileNameLength);
-  std::string decFileName = encrypter.Decrypt(encFileName);
+  std::string decFileName = encrypter.Decrypt(encFileName, key);
   m_name = converter.from_bytes(decFileName);
 
   size_t fileSize;
@@ -185,7 +185,7 @@ bool FileInsideSanctum::ReadHeaderFrom(std::ifstream & input, sanctum::encrypter
   Записать файл в поток c шифрованием данных
 */
 //---
-bool FileInsideSanctum::WriteTo(std::ofstream & output, sanctum::encrypter::IfEncrypter & encrypter)
+bool FileInsideSanctum::WriteTo(std::ofstream & output, sanctum::encrypter::IfEncrypter & encrypter, const std::string & key)
 {
   m_offset = static_cast<std::streamoff>(output.tellp());
   std::ifstream file(m_fullPath.c_str(), std::ios::binary);
@@ -207,8 +207,8 @@ bool FileInsideSanctum::WriteTo(std::ofstream & output, sanctum::encrypter::IfEn
   {
     file.close();
 
-    WriteHeaderTo(output, encrypter);
-    std::vector<char> encFileBytes = encrypter.Encrypt(fileBytes);
+    WriteHeaderTo(output, encrypter, key);
+    std::vector<char> encFileBytes = encrypter.Encrypt(fileBytes, key);
     WriteDigitToStream<size_t>(output, encFileBytes.size());
 
     for (auto && nextByte : encFileBytes)
@@ -229,17 +229,17 @@ bool FileInsideSanctum::WriteTo(std::ofstream & output, sanctum::encrypter::IfEn
   Записать заголовок файла в поток
 */
 //---
-void FileInsideSanctum::WriteHeaderTo(std::ofstream & output, sanctum::encrypter::IfEncrypter & encrypter) const
+void FileInsideSanctum::WriteHeaderTo(std::ofstream & output, sanctum::encrypter::IfEncrypter & encrypter, const std::string & key) const
 {
   WriteDigitToStream<int>(output, m_version);
   
   std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-  std::string encDirName = encrypter.Encrypt(converter.to_bytes(m_dirInSanctum));
+  std::string encDirName = encrypter.Encrypt(converter.to_bytes(m_dirInSanctum), key);
 
   WriteDigitToStream<size_t>(output, encDirName.size());
   WriteStringToStream(output, encDirName);
 
-  std::string encFileName = encrypter.Encrypt(converter.to_bytes(m_name));
+  std::string encFileName = encrypter.Encrypt(converter.to_bytes(m_name), key);
 
   WriteDigitToStream<size_t>(output, encFileName.size());
   WriteStringToStream(output, encFileName);
