@@ -874,6 +874,17 @@ bool DefaultCore::SaveConfig() const
     cfgWorkDirNode.append_child(pugi::node_pcdata).set_value(m_workDir.wstring().c_str());
   }
 
+  pugi::xml_node encNode = cfgRootNode.append_child(L"Encrypter");
+
+  if (m_outsideEncrypterPath.empty())
+  {
+    encNode.append_child(pugi::node_pcdata).set_value(L"Default");
+  }
+  else
+  {
+    encNode.append_child(pugi::node_pcdata).set_value(m_outsideEncrypterPath.wstring().c_str());
+  }
+
   if (doc.save_file("sanctumcfg.xml")) 
   {
     return true;
@@ -936,6 +947,23 @@ void DefaultCore::LoadConfig()
       m_workDir = cfgNodeValue;
     }
   }
+
+  pugi::xml_node encNode = cfgRootNode.child(L"Encrypter");
+
+  if (encNode)
+  {
+    cfgNodeValue = encNode.child_value();
+
+    if (cfgNodeValue == L"Default")
+    {
+      m_encrypter = sanctum::encrypter::GetEncrypter(); // уиолчательный шифратор
+    }
+    else
+    {
+      LoadEncrypter(cfgNodeValue);
+    }
+  }
+
 }
 
 
