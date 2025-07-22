@@ -34,7 +34,8 @@ private:
   std::unique_ptr<ContentsTable> m_contentsTable; ///< оглавление хранилища
   mutable std::string m_operationKey; ///< ключ шифрования для одной операции
   std::string m_permanentKey; ///< постоянный ключ шифрования 
-  mutable size_t m_keyHash; ///< хеш используемого ключа
+  mutable size_t m_coreKeyHash; ///< хеш используемого ключа уровня ядра (для коммитов и шифраторов без ключа)
+  mutable std::optional<size_t> m_encKeyHash; ///< хеш ключа шифратора для доп. проверки
   std::filesystem::path m_outsideEncrypterPath; ///< путь загруженной внешней библиотеки шифратора
 
   // способ размещения файла в хранилище

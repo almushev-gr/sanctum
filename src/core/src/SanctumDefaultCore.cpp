@@ -34,7 +34,7 @@ DefaultCore::DefaultCore()
   , m_sanctumName(c_sanctumDefaultName)
   , m_sanctumPath()
   , m_contentsTable()
-  , m_keyHash(std::hash<std::string>{}("defpass"))
+  , m_coreKeyHash(std::hash<std::string>{}("defpass"))
 {
   LoadConfig();
   m_sanctumPath = m_sanctumDir / m_sanctumName;
@@ -141,11 +141,11 @@ FileOperationResult DefaultCore::Get(const std::wstring & getPath)
     result.opResult = checkKeyResult;
     return result;
   }
-  else 
+  else if (m_encrypter->GetKeyPolicy() == sanctum::encrypter::KeyPolicy::KeyForEncryption)
   {
-    m_keyHash = std::hash<std::string>{}(GetKey());
+    m_encKeyHash = std::hash<std::string>{}(GetKey());
   }
-
+ 
   std::filesystem::path filePath(getPath);
   std::filesystem::path fileOrDirName = filePath.filename();
   std::filesystem::path dirInSanctum = filePath.parent_path();
@@ -297,11 +297,11 @@ FileOperationResult DefaultCore::Put(const std::wstring & path)
     result.opResult = checkKeyResult;
     return result;
   }
-  else 
+  else if (m_encrypter->GetKeyPolicy() == sanctum::encrypter::KeyPolicy::KeyForEncryption)
   {
-    m_keyHash = std::hash<std::string>{}(GetKey());
+    m_encKeyHash = std::hash<std::string>{}(GetKey());
   }
-
+  
   result.opResult = OperationResult::Ok;
   std::filesystem::path putPath(path);
 
@@ -383,7 +383,7 @@ OperationResult DefaultCore::CheckKey() const
       {
         result = OperationResult::KeyRequired;
       }
-      else if (std::hash<std::string>{}(GetKey()) != m_keyHash)
+      else if (std::hash<std::string>{}(GetKey()) != m_coreKeyHash)
       {
         result = OperationResult::InvalidKey;
       }
@@ -396,7 +396,7 @@ OperationResult DefaultCore::CheckKey() const
       {
         result = OperationResult::KeyRequired;
       }
-      else if (std::hash<std::string>{}(GetKey()) != m_keyHash)
+      else if (m_encKeyHash && *m_encKeyHash != std::hash<std::string>{}(GetKey()))
       {
         result = OperationResult::KeyHashDismatch;
       }
@@ -608,11 +608,11 @@ ContentsOperationResult DefaultCore::GetFileDescriptions()
     result.opResult = checkKeyResult;
     return result;
   }
-  else 
+  else if (m_encrypter->GetKeyPolicy() == sanctum::encrypter::KeyPolicy::KeyForEncryption)
   {
-    m_keyHash = std::hash<std::string>{}(GetKey());
+    m_encKeyHash = std::hash<std::string>{}(GetKey());
   }
- 
+   
   result.opResult = OperationResult::Ok;
   result.descs = GetContentsTable().GetDescriptions();
   m_operationKey.clear();
