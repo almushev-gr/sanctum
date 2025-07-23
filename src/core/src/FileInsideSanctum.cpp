@@ -1,6 +1,7 @@
 #include "FileInsideSanctum.h"
 #include <filesystem>
 #include <codecvt>
+#include <stdexcept>
 
 
 namespace 
@@ -163,15 +164,31 @@ bool FileInsideSanctum::ReadHeaderFrom(std::ifstream & input, sanctum::encrypter
   std::string encDirName = ReadStringFromStream(input, dirNameLength);
   std::string decDirName = encrypter.Decrypt(encDirName, key);
   std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-  m_dirInSanctum = converter.from_bytes(decDirName);
+
+  try
+  {
+    m_dirInSanctum = converter.from_bytes(decDirName);
+  }
+  catch (const std::range_error & ex)
+  {
+    m_dirInSanctum = std::wstring(decDirName.size(), L'#');
+  }
 
   size_t fileNameLength;
   input.read(reinterpret_cast<char *>(&fileNameLength), sizeof(size_t));
 
   std::string encFileName = ReadStringFromStream(input, fileNameLength);
   std::string decFileName = encrypter.Decrypt(encFileName, key);
-  m_name = converter.from_bytes(decFileName);
 
+  try
+  {
+    m_name = converter.from_bytes(decFileName);
+  }
+  catch (const std::range_error & ex)
+  {
+    m_name = std::wstring(decFileName.size(), L'#');
+  }
+  
   size_t fileSize;
   input.read(reinterpret_cast<char *>(&fileSize), sizeof(size_t));
   m_contentSize = fileSize;
