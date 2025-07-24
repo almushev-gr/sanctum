@@ -17,7 +17,6 @@ enum class OperationResult
   FileAlreadyExist,
   AmbiguousInput, // неоднозначные входные данные
   InvalidKey, // неверный ключ для шифрации
-  KeyHashDismatch, // несовпадение хеша ключа и хеша в ядре
   KeyRequired, // требуется ключ для шифрации
   UnknownError,
   RemoveFileError,
@@ -77,6 +76,7 @@ struct IfSanctumCore
   virtual OperationResult UnloadEncrypter() = 0;
   virtual std::wstring GetEncrypterName() const = 0;
   virtual ContentsOperationResult GetFileDescriptions() = 0;
+  virtual void ClearContents() = 0;
   virtual OperationResult Commit() = 0;
   virtual ~IfSanctumCore() = default;
 };

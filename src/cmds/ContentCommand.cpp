@@ -81,7 +81,19 @@ void SortResultDescriptions(core::ContentsOperationResult & result)
 bool ContentCommand::Run(const std::vector<std::wstring> & params)
 {
   ClearMessages();
-  core::ContentsOperationResult result = GetCore().GetFileDescriptions();
+  std::map<std::wstring, std::wstring> opts = GetOptions(params);
+
+  core::ContentsOperationResult result;
+
+  if (opts.count(L"drop"))
+  {
+    GetCore().ClearContents();
+    result.opResult = core::OperationResult::Ok;
+    AddSuccessMessageStrings({L"ContentsTable is clear"});
+    return true;
+  }
+
+  result = GetCore().GetFileDescriptions();
 
   if (result.opResult == core::OperationResult::KeyRequired)
   {
@@ -118,6 +130,10 @@ bool ContentCommand::Run(const std::vector<std::wstring> & params)
     }
    
     return true;
+  }
+  else if (result.opResult == core::OperationResult::FileProcessFail)
+  {
+    AddFailMessageStrings({L"Cant get contents. Perhaps wrong key entered"});
   }
   else
   {

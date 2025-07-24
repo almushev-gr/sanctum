@@ -14,25 +14,26 @@ namespace sanctum::core
   Обновить оглавление хранилища
 */
 //---
-void ContentsTable::Update(const std::filesystem::path & sanctumPath, sanctum::encrypter::IfEncrypter & encrypter, const std::string & key)
+OperationResult ContentsTable::Update(const std::filesystem::path & sanctumPath, sanctum::encrypter::IfEncrypter & encrypter, const std::string & key)
 {
-   m_fileDescs.clear();
-   m_dirs.clear();
+  m_fileDescs.clear();
+  m_dirs.clear();
   
   if (!std::filesystem::exists(sanctumPath))
   {
-    return;
+    return OperationResult::NoSanctum;
   }
 
   std::ifstream sanctumFile(sanctumPath.string(), std::ios::binary);
 
   if (!sanctumFile.is_open())
   {
-    return;
+    return OperationResult::NoSanctum;
   }
 
   sanctumFile.unsetf(std::ios::skipws);
   int i = 0;
+  OperationResult result = OperationResult::Ok;
   
   while (!sanctumFile.eof())
   {
@@ -50,6 +51,13 @@ void ContentsTable::Update(const std::filesystem::path & sanctumPath, sanctum::e
       AddDirByDescription(nextDesc);
       i++;
     }
+    else if (!sanctumFile.eof())
+    {
+      result = OperationResult::FileProcessFail;
+      m_fileDescs.clear();
+      m_dirs.clear();
+      break;
+    }
     else 
     {
       break;
@@ -57,6 +65,7 @@ void ContentsTable::Update(const std::filesystem::path & sanctumPath, sanctum::e
   }
   
   sanctumFile.close();
+  return result;
 }
 
 

@@ -35,7 +35,6 @@ private:
   mutable std::string m_operationKey; ///< ключ шифрования для одной операции
   std::string m_permanentKey; ///< постоянный ключ шифрования 
   mutable size_t m_coreKeyHash; ///< хеш используемого ключа уровня ядра (для коммитов и шифраторов без ключа)
-  mutable std::optional<size_t> m_encKeyHash; ///< хеш ключа шифратора для доп. проверки
   std::filesystem::path m_outsideEncrypterPath; ///< путь загруженной внешней библиотеки шифратора
 
   // способ размещения файла в хранилище
@@ -59,6 +58,7 @@ public:
   virtual FileOperationResult Get(const std::wstring & path) override;
   virtual OperationResult Commit() override;
   virtual ContentsOperationResult GetFileDescriptions() override;
+  virtual void ClearContents() override;
   virtual bool SaveConfig() const override;
   virtual void SetOperationKey(const std::string & key) override;
   virtual OperationResult LoadEncrypter(const std::wstring & encPath) override;

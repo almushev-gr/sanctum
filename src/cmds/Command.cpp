@@ -39,11 +39,7 @@ void Command::MakeMessagesForNegativeResult(core::OperationResult result)
     case core::OperationResult::InvalidKey:
       m_failMessage.emplace_back(L"Invalid key");
     break;
-
-    case core::OperationResult::KeyHashDismatch:
-      m_failMessage.emplace_back(L"Key hash mismatch. Clear hash or enter suitable key");
-    break;
-
+   
     case core::OperationResult::RemoveFileError:
       m_failMessage.emplace_back(L"Filesystem: cant remove files");
     break;

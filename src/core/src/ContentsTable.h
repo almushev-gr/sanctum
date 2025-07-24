@@ -30,7 +30,7 @@ public:
   ~ContentsTable() = default;
 
   const std::vector<FileDescription> & GetDescriptions() const { return m_fileDescs; }
-  void Update(const std::filesystem::path & sanctumPath, sanctum::encrypter::IfEncrypter & encrypter, const std::string & key);
+  OperationResult Update(const std::filesystem::path & sanctumPath, sanctum::encrypter::IfEncrypter & encrypter, const std::string & key);
   void AddFile(const FileDescription & fileDesc);
   int GetFileNextVersion(const std::wstring & dirInSanctum, const std::wstring & fileName) const;
   bool IsFileExist(const std::filesystem::path & dirPath, const std::filesystem::path & fileName) const;
@@ -39,6 +39,7 @@ public:
   std::vector<FileDescription> GetFilesInDir(const std::wstring & dirPath);
   std::set<std::filesystem::path> GetDirsContainsString(const std::wstring & str);
   std::set<std::filesystem::path> GetFilesContainsString(const std::wstring & str);
+  bool IsEmpty() const { return m_fileDescs.empty(); }
 
 private:
   void AddDirByDescription(const FileDescription & desc);

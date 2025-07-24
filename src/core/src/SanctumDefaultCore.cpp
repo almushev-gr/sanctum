@@ -141,10 +141,6 @@ FileOperationResult DefaultCore::Get(const std::wstring & getPath)
     result.opResult = checkKeyResult;
     return result;
   }
-  else if (m_encrypter->GetKeyPolicy() == sanctum::encrypter::KeyPolicy::KeyForEncryption)
-  {
-    m_encKeyHash = std::hash<std::string>{}(GetKey());
-  }
  
   std::filesystem::path filePath(getPath);
   std::filesystem::path fileOrDirName = filePath.filename();
@@ -297,11 +293,7 @@ FileOperationResult DefaultCore::Put(const std::wstring & path)
     result.opResult = checkKeyResult;
     return result;
   }
-  else if (m_encrypter->GetKeyPolicy() == sanctum::encrypter::KeyPolicy::KeyForEncryption)
-  {
-    m_encKeyHash = std::hash<std::string>{}(GetKey());
-  }
-  
+
   result.opResult = OperationResult::Ok;
   std::filesystem::path putPath(path);
 
@@ -395,10 +387,6 @@ OperationResult DefaultCore::CheckKey() const
       if (GetKey().empty())
       {
         result = OperationResult::KeyRequired;
-      }
-      else if (m_encKeyHash && *m_encKeyHash != std::hash<std::string>{}(GetKey()))
-      {
-        result = OperationResult::KeyHashDismatch;
       }
     }
     break;
@@ -608,15 +596,32 @@ ContentsOperationResult DefaultCore::GetFileDescriptions()
     result.opResult = checkKeyResult;
     return result;
   }
-  else if (m_encrypter->GetKeyPolicy() == sanctum::encrypter::KeyPolicy::KeyForEncryption)
-  {
-    m_encKeyHash = std::hash<std::string>{}(GetKey());
-  }
    
   result.opResult = OperationResult::Ok;
-  result.descs = GetContentsTable().GetDescriptions();
+
+  if (GetContentsTable().IsEmpty()) // возможно был введен не тот ключ
+  {
+    result.opResult = GetContentsTable().Update(GetRelevantPath(), *m_encrypter, GetKey());
+    result.descs = GetContentsTable().GetDescriptions();
+  }
+  else 
+  {
+    result.descs = GetContentsTable().GetDescriptions();
+  }
+  
   m_operationKey.clear();
   return result;
+}
+
+
+//----------------------------------------------------------
+/*
+  Очистить закешированное оглавление хранилища
+*/
+//---
+void DefaultCore::ClearContents()
+{
+  m_contentsTable.reset();
 }
 
 

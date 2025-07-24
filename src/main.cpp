@@ -70,6 +70,13 @@ int main()
       break;
     }
 
+    if (command == L"cls")
+    {
+      std::wcout.clear();
+      system("cls");
+      continue;
+    }
+
     std::wregex regex_space(L"\\s+");
     std::wsregex_token_iterator iter (command.begin(), command.end(), regex_space, -1);
     std::wsregex_token_iterator end;
