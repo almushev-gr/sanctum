@@ -12,15 +12,23 @@ namespace
   */
   //---
   template <typename T>
-  void WriteDigitToStream(std::ofstream & output, T element)
+  bool WriteDigitToStream(std::ofstream & output, T element)
   {
     const char * nextByte = reinterpret_cast<const char*>(&element);
 
     for (int i = 0; i < sizeof(element); ++i)
     {
       output << *nextByte;
+
+      if (output.fail())
+      {
+        return false;
+      }
+
       nextByte++;
     }
+
+    return true;
   }
 
 
@@ -29,12 +37,19 @@ namespace
     Записать строку в поток
   */
   //---
-  void WriteStringToStream(std::ofstream & output, const std::string & str)
+  bool WriteStringToStream(std::ofstream & output, const std::string & str)
   {
     for (int i = 0; i < str.size(); ++i)
     {
       output << str[i];
+
+      if (output.fail())
+      {
+        return false;
+      }
     }
+
+    return true;
   }
 
 
@@ -43,7 +58,7 @@ namespace
     Прочитать строку из потока
   */
   //---
-  std::string ReadStringFromStream(std::ifstream & input, size_t strLength)
+  std::optional<std::string> ReadStringFromStream(std::ifstream & input, size_t strLength)
   {
     std::string result;
 
@@ -51,11 +66,91 @@ namespace
     {
       char nextChar;
       input >> nextChar;
+
+      if (input.fail())
+      {
+        return std::nullopt;
+      }
+
       result.push_back(nextChar);
     }
 
     return result;
   }
+
+
+  //----------------------------------------------------------
+  /*
+    Прочитать и декодировать строку из потока
+  */
+  //---
+  bool ReadDecStringFromStream(std::wstring & outStr, std::ifstream & input,  
+    sanctum::encrypter::IfEncrypter & encrypter, const std::string & key)
+  {
+    size_t strLength;
+    input.read(reinterpret_cast<char *>(&strLength), sizeof(size_t));
+
+    if (input.fail())
+    {
+      return false;
+    }
+
+    std::optional<std::string> encStr = ReadStringFromStream(input, strLength);
+
+    if (!encStr)
+    {
+      return false;
+    }
+
+    std::string decStr = encrypter.Decrypt(*encStr, key);
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+
+    try
+    {
+      outStr = converter.from_bytes(decStr);
+    }
+    catch (const std::range_error & ex)
+    {
+      outStr = std::wstring(decStr.size(), L'#');
+    }
+
+    return true;
+  }
+
+
+  //----------------------------------------------------------
+  /*
+    Зашифровать строку и поместить в поток
+  */
+  //---
+  bool WriteEncStringToStream(const std::wstring & str, std::ofstream & output, 
+    sanctum::encrypter::IfEncrypter & encrypter, const std::string & key)
+  {
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+    std::string encString;
+    
+    try 
+    {
+      encString = encrypter.Encrypt(converter.to_bytes(str), key);
+    }
+    catch (const std::range_error & ex)
+    {
+      return false;
+    }
+      
+    if (!WriteDigitToStream<size_t>(output, encString.size()))
+    {
+      return false;
+    }
+
+    if (!WriteStringToStream(output, encString))
+    {
+      return false;
+    }
+
+    return true;
+  }
+
 }
 
 
@@ -151,6 +246,11 @@ bool FileInsideSanctum::SaveTo(const std::filesystem::path & dirPath) const
 //---
 bool FileInsideSanctum::ReadHeaderFrom(std::ifstream & input, sanctum::encrypter::IfEncrypter & encrypter, const std::string & key)
 {
+  if (!ReadDecStringFromStream(m_encName, input, encrypter, key))
+  {
+    return false;
+  }
+
   input.read(reinterpret_cast<char *>(&m_version), sizeof(int));
 
   if (input.fail())
@@ -158,41 +258,25 @@ bool FileInsideSanctum::ReadHeaderFrom(std::ifstream & input, sanctum::encrypter
     return false;
   }
 
-  size_t dirNameLength;
-  input.read(reinterpret_cast<char *>(&dirNameLength), sizeof(size_t));
-
-  std::string encDirName = ReadStringFromStream(input, dirNameLength);
-  std::string decDirName = encrypter.Decrypt(encDirName, key);
-  std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-
-  try
+  if (!ReadDecStringFromStream(m_dirInSanctum, input, encrypter, key))
   {
-    m_dirInSanctum = converter.from_bytes(decDirName);
-  }
-  catch (const std::range_error & ex)
-  {
-    m_dirInSanctum = std::wstring(decDirName.size(), L'#');
+    return false;
   }
 
-  size_t fileNameLength;
-  input.read(reinterpret_cast<char *>(&fileNameLength), sizeof(size_t));
-
-  std::string encFileName = ReadStringFromStream(input, fileNameLength);
-  std::string decFileName = encrypter.Decrypt(encFileName, key);
-
-  try
+  if (!ReadDecStringFromStream(m_name, input, encrypter, key))
   {
-    m_name = converter.from_bytes(decFileName);
-  }
-  catch (const std::range_error & ex)
-  {
-    m_name = std::wstring(decFileName.size(), L'#');
+    return false;
   }
   
   size_t fileSize;
   input.read(reinterpret_cast<char *>(&fileSize), sizeof(size_t));
-  m_contentSize = fileSize;
 
+  if (input.fail())
+  {
+    return false;
+  }
+
+  m_contentSize = fileSize;
   return true;
 }
 
@@ -224,16 +308,19 @@ bool FileInsideSanctum::WriteTo(std::ofstream & output, sanctum::encrypter::IfEn
   {
     file.close();
 
-    WriteHeaderTo(output, encrypter, key);
     std::vector<char> encFileBytes = encrypter.Encrypt(fileBytes, key);
-    WriteDigitToStream<size_t>(output, encFileBytes.size());
+    m_contentSize = encFileBytes.size();
+    m_encName = encrypter.GetName();
 
-    for (auto && nextByte : encFileBytes)
+    if (WriteHeaderTo(output, encrypter, key))
     {
-      output << nextByte;
-    }
+      for (auto && nextByte : encFileBytes)
+      {
+        output << nextByte;
+      }
 
-    return true;
+      return true;
+    }
   }
 
   file.close();
@@ -246,20 +333,39 @@ bool FileInsideSanctum::WriteTo(std::ofstream & output, sanctum::encrypter::IfEn
   Записать заголовок файла в поток
 */
 //---
-void FileInsideSanctum::WriteHeaderTo(std::ofstream & output, sanctum::encrypter::IfEncrypter & encrypter, const std::string & key) const
+bool FileInsideSanctum::WriteHeaderTo(std::ofstream & output, sanctum::encrypter::IfEncrypter & encrypter, const std::string & key) const
 {
-  WriteDigitToStream<int>(output, m_version);
+  if (!m_contentSize || m_encName.empty())
+  {
+    return false;
+  }
+
+  if (!WriteEncStringToStream(m_encName, output, encrypter, key))
+  {
+    return false;
+  }
+
+  if (!WriteDigitToStream<int>(output, m_version))
+  {
+    return false;
+  }
+
+  if (!WriteEncStringToStream(m_dirInSanctum, output, encrypter, key))
+  {
+    return false;
+  }
+ 
+  if (!WriteEncStringToStream(m_name, output, encrypter, key))
+  {
+    return false;
+  }
   
-  std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-  std::string encDirName = encrypter.Encrypt(converter.to_bytes(m_dirInSanctum), key);
-
-  WriteDigitToStream<size_t>(output, encDirName.size());
-  WriteStringToStream(output, encDirName);
-
-  std::string encFileName = encrypter.Encrypt(converter.to_bytes(m_name), key);
-
-  WriteDigitToStream<size_t>(output, encFileName.size());
-  WriteStringToStream(output, encFileName);
+  if (!WriteDigitToStream<size_t>(output, *m_contentSize))
+  {
+    return false;
+  }
+ 
+  return true;
 }
 
 

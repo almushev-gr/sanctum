@@ -27,6 +27,7 @@ private:
   std::wstring m_fullPath; ///< полное имя файла на диске
   std::wstring m_dirInSanctum; ///< директория в контексте хранилища
   std::wstring m_name; ///< имя файла
+  std::wstring m_encName; ///< имя шифратора, которым был зашифрован файл
   std::optional<size_t> m_contentSize; ///< размер содержательной части файла
   size_t m_offset{0}; ///< смещение внутри хранилища
   int m_version{0}; ///< версия файла
@@ -51,7 +52,7 @@ public:
   void SetVersion(int version) { m_version = version; }
 
 private:
-  void WriteHeaderTo(std::ofstream & output, sanctum::encrypter::IfEncrypter & encrypter, const std::string & key) const;
+  bool WriteHeaderTo(std::ofstream & output, sanctum::encrypter::IfEncrypter & encrypter, const std::string & key) const;
   bool ReadHeaderFrom(std::ifstream & input, sanctum::encrypter::IfEncrypter & encrypter, const std::string & key);
 
 };
