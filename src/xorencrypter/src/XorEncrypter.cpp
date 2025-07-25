@@ -87,7 +87,7 @@ KeyPolicy XorEncrypter::GetKeyPolicy() const
 //---
 std::wstring XorEncrypter::GetName() const
 {
-  return L"xor";
+  return L"ExclusiveOrEncrypter";
 }
 
 

@@ -39,6 +39,14 @@ void Command::MakeMessagesForNegativeResult(core::OperationResult result)
     case core::OperationResult::InvalidKey:
       m_failMessage.emplace_back(L"Invalid key");
     break;
+
+    case core::OperationResult::WrongEncrypter:
+      m_failMessage.emplace_back(L"Sanctum encrypted by another encrypter");
+    break;
+
+     case core::OperationResult::WrongKeyOrEncrypter:
+      m_failMessage.emplace_back(L"Sanctum encrypted by another encrypter or invalid key");
+    break;
    
     case core::OperationResult::RemoveFileError:
       m_failMessage.emplace_back(L"Filesystem: cant remove files");

@@ -78,6 +78,7 @@ private:
   std::vector<std::filesystem::path> FindFilesInWorkDir(const std::filesystem::path & fileName);
   void LoadConfig();
   OperationResult CheckKey() const;
+  OperationResult CheckDecryption() const;
   std::string GetKey() const;
   OperationResult RemoveFromDisk(const std::vector<std::wstring> & paths);
   FileOperationResult GetDir(const std::wstring & dirPath);

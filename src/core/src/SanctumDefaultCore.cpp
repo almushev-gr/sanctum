@@ -379,6 +379,10 @@ OperationResult DefaultCore::CheckKey() const
       {
         result = OperationResult::InvalidKey;
       }
+      else 
+      {
+        result = CheckDecryption();      
+      }
     }
     break;
 
@@ -388,6 +392,10 @@ OperationResult DefaultCore::CheckKey() const
       {
         result = OperationResult::KeyRequired;
       }
+      else
+      {
+        result = CheckDecryption();
+      }
     }
     break;
 
@@ -396,6 +404,46 @@ OperationResult DefaultCore::CheckKey() const
   }
   
   return result;
+}
+
+
+//----------------------------------------------------------
+/*
+  Проверить дешифрацию
+  Читает имя шифратора из заголовка первого файла
+*/
+//---
+OperationResult DefaultCore::CheckDecryption() const
+{
+  // хранилища пока нет. Так что расшифровывать нечего
+  if (!std::filesystem::exists(GetRelevantPath()))
+  {
+    return OperationResult::Ok;
+  }
+
+   std::ifstream sanctumFile(GetRelevantPath().string(), std::ios::binary);
+
+  if (!sanctumFile.is_open())
+  {
+    return OperationResult::NoSanctum;
+  }
+
+  sanctumFile.unsetf(std::ios::skipws);
+  FileInsideSanctum firstFile;
+  firstFile.ReadFrom(sanctumFile, FileInsideSanctum::FileReadMode::HeaderOnly, *m_encrypter, GetKey());
+  sanctumFile.close();
+
+  if (firstFile.GetEncName() == m_encrypter->GetName())
+  {
+    return OperationResult::Ok;
+  }
+
+  if (m_encrypter->GetKeyPolicy() == encrypter::KeyPolicy::KeyForCall)
+  {
+    return OperationResult::WrongEncrypter;
+  }
+  
+  return OperationResult::WrongKeyOrEncrypter;
 }
 
 

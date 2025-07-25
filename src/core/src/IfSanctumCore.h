@@ -18,6 +18,8 @@ enum class OperationResult
   AmbiguousInput, // неоднозначные входные данные
   InvalidKey, // неверный ключ для шифрации
   KeyRequired, // требуется ключ для шифрации
+  WrongEncrypter, // не тот шифратор
+  WrongKeyOrEncrypter, // либо не тот шифратор, либо не тот ключ
   UnknownError,
   RemoveFileError,
   RenameFileError,
