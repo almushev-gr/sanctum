@@ -64,6 +64,8 @@ public:
   virtual OperationResult LoadEncrypter(const std::wstring & encPath) override;
   virtual OperationResult UnloadEncrypter() override;
   virtual std::wstring GetEncrypterName() const override;
+  virtual ProtectionMethod GetProtectionMethod() const override;
+  virtual bool IsPermanentKeyDefined() const override;
 
 private:
   std::wstring GetFileDirUpTo(const std::wstring & fileName, const std::wstring & dirName);

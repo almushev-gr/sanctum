@@ -1,0 +1,27 @@
+#pragma once
+#include "Command.h"
+#include <IfSanctumCore.h>
+
+
+namespace sanctum
+{
+
+//----------------------------------------------------------
+/*
+  Команда "Ключ хранилища"
+  Используется для смены\проверки\сброса ключей хранилища
+*/
+//---
+class KeyCommand : public Command
+{
+public:
+  KeyCommand(core::IfSanctumCore & core);
+  virtual ~KeyCommand() = default;
+  virtual bool Run(const std::vector<std::wstring> & params) override;
+  virtual const std::wstring GetName() const override;
+
+private:
+  void KeyInformation();
+};
+
+}

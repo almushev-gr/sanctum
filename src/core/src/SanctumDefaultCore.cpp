@@ -1178,6 +1178,51 @@ std::wstring DefaultCore::GetEncrypterName() const
 
 //----------------------------------------------------------
 /*
+  Получить способ защиты хранилища
+*/
+//---
+ProtectionMethod DefaultCore::GetProtectionMethod() const
+{
+  encrypter::KeyPolicy kp = m_encrypter->GetKeyPolicy();
+
+  switch (kp)
+  {
+    case (encrypter::KeyPolicy::KeyForCall):
+    {
+      return ProtectionMethod::CoreKey;
+    }
+    break;
+
+    case (encrypter::KeyPolicy::KeyForEncryption):
+    {
+      return ProtectionMethod::EncrypterKey;
+    }
+    break;
+
+    case (encrypter::KeyPolicy::NoKey):
+    default:
+    {
+      return ProtectionMethod::NoKey;
+    }
+    break;
+  }
+}
+
+
+//----------------------------------------------------------
+/*
+  Проверить задан ли постоянный ключ
+  Используется, чтобы не вводить ключ на каждую операцию
+*/
+//---
+bool DefaultCore::IsPermanentKeyDefined() const 
+{
+  return !m_permanentKey.empty();
+}
+
+
+//----------------------------------------------------------
+/*
   Создать ядро хранилища
 */
 //---

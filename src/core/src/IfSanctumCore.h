@@ -57,6 +57,15 @@ struct ContentsOperationResult
 };
 
 
+// способ защиты хранилища
+enum class ProtectionMethod
+{
+  CoreKey, // с помощью ключа уровня ядра
+  EncrypterKey, // с помощью ключа шифрования
+  NoKey // без ключа 
+};
+
+
 //----------------------------------------------------------
 /*
   Интерфейс ядра хранилища
@@ -77,6 +86,8 @@ struct IfSanctumCore
   virtual OperationResult LoadEncrypter(const std::wstring & encPath) = 0;
   virtual OperationResult UnloadEncrypter() = 0;
   virtual std::wstring GetEncrypterName() const = 0;
+  virtual ProtectionMethod GetProtectionMethod() const = 0;
+  virtual bool IsPermanentKeyDefined() const = 0;
   virtual ContentsOperationResult GetFileDescriptions() = 0;
   virtual void ClearContents() = 0;
   virtual OperationResult Commit() = 0;
