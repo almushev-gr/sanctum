@@ -32,6 +32,8 @@ add_executable(${exe_target}
     "src/cmds/GetCommand.cpp"
     "src/cmds/KeyCommand.h"
     "src/cmds/KeyCommand.cpp"
+    "src/cmds/SanctumNameCommand.h"
+    "src/cmds/SanctumNameCommand.cpp"
     "src/core/src/IfSanctumCore.h"
     "src/cmds/ConsoleTable.h"
     "src/cmds/ConsoleTable.cpp"

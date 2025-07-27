@@ -54,6 +54,7 @@ public:
   virtual OperationResult SetSanctumDir(const std::wstring & dirFullPath) override;
   virtual std::wstring GetSanctumDir() const override; 
   virtual OperationResult SetSanctumName(const std::wstring & name) override;
+  virtual std::wstring GetSanctumName() const override;
   virtual FileOperationResult Put(const std::wstring & path) override;
   virtual FileOperationResult Get(const std::wstring & path) override;
   virtual OperationResult Commit() override;
@@ -64,7 +65,7 @@ public:
   virtual OperationResult LoadEncrypter(const std::wstring & encPath) override;
   virtual OperationResult UnloadEncrypter() override;
   virtual std::wstring GetEncrypterName() const override;
-  virtual ProtectionMethod GetProtectionMethod() const override;
+  virtual KeyPolicy GetKeyPolicy() const override;
   virtual bool IsPermanentKeyDefined() const override;
 
 private:

@@ -47,23 +47,23 @@ bool KeyCommand::Run(const std::vector<std::wstring> & params)
 //--- 
 void KeyCommand::KeyInformation()
 {
-  core::ProtectionMethod method = GetCore().GetProtectionMethod();
+  core::KeyPolicy method = GetCore().GetKeyPolicy();
 
   switch (method)
   {
-    case (core::ProtectionMethod::CoreKey):
+    case (core::KeyPolicy::CoreKey):
     {
       AddSuccessMessageStrings({L"Protection method: core key"}); 
     }
     break;
 
-    case (core::ProtectionMethod::EncrypterKey):
+    case (core::KeyPolicy::EncrypterKey):
     {
       AddSuccessMessageStrings({L"Protection method: encrypter key"}); 
     }
     break;
 
-    case (core::ProtectionMethod::NoKey):
+    case (core::KeyPolicy::NoKey):
     {
       AddSuccessMessageStrings({L"Protection method: no key"}); 
     }

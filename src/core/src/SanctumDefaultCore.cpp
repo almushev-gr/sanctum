@@ -722,6 +722,17 @@ std::wstring DefaultCore::GetSanctumDir() const
 
 //----------------------------------------------------------
 /*
+  Получить имя хранилища
+*/
+//---
+std::wstring DefaultCore::GetSanctumName() const
+{
+  return m_sanctumName.wstring();
+}
+
+
+//----------------------------------------------------------
+/*
   Получить рабочую директорию
 */
 //---
@@ -1178,10 +1189,10 @@ std::wstring DefaultCore::GetEncrypterName() const
 
 //----------------------------------------------------------
 /*
-  Получить способ защиты хранилища
+  Получить способ работы с ключами хранилища
 */
 //---
-ProtectionMethod DefaultCore::GetProtectionMethod() const
+KeyPolicy DefaultCore::GetKeyPolicy() const
 {
   encrypter::KeyPolicy kp = m_encrypter->GetKeyPolicy();
 
@@ -1189,20 +1200,20 @@ ProtectionMethod DefaultCore::GetProtectionMethod() const
   {
     case (encrypter::KeyPolicy::KeyForCall):
     {
-      return ProtectionMethod::CoreKey;
+      return KeyPolicy::CoreKey;
     }
     break;
 
     case (encrypter::KeyPolicy::KeyForEncryption):
     {
-      return ProtectionMethod::EncrypterKey;
+      return KeyPolicy::EncrypterKey;
     }
     break;
 
     case (encrypter::KeyPolicy::NoKey):
     default:
     {
-      return ProtectionMethod::NoKey;
+      return KeyPolicy::NoKey;
     }
     break;
   }

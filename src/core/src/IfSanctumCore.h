@@ -57,8 +57,8 @@ struct ContentsOperationResult
 };
 
 
-// способ защиты хранилища
-enum class ProtectionMethod
+// способ работы с ключами хранилища
+enum class KeyPolicy
 {
   CoreKey, // с помощью ключа уровня ядра
   EncrypterKey, // с помощью ключа шифрования
@@ -79,6 +79,7 @@ struct IfSanctumCore
   virtual OperationResult SetSanctumDir(const std::wstring & dirFullPath) = 0;
   virtual std::wstring GetSanctumDir() const = 0; 
   virtual OperationResult SetSanctumName(const std::wstring & name) = 0;
+  virtual std::wstring GetSanctumName() const = 0;
   virtual FileOperationResult Put(const std::wstring & path) = 0;
   virtual FileOperationResult Get(const std::wstring & path) = 0;
   virtual bool SaveConfig() const = 0;
@@ -86,7 +87,7 @@ struct IfSanctumCore
   virtual OperationResult LoadEncrypter(const std::wstring & encPath) = 0;
   virtual OperationResult UnloadEncrypter() = 0;
   virtual std::wstring GetEncrypterName() const = 0;
-  virtual ProtectionMethod GetProtectionMethod() const = 0;
+  virtual KeyPolicy GetKeyPolicy() const = 0;
   virtual bool IsPermanentKeyDefined() const = 0;
   virtual ContentsOperationResult GetFileDescriptions() = 0;
   virtual void ClearContents() = 0;
