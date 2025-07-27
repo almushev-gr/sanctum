@@ -54,6 +54,7 @@ public:
   virtual OperationResult SetSanctumDir(const std::wstring & dirFullPath) override;
   virtual std::wstring GetSanctumDir() const override; 
   virtual OperationResult SetSanctumName(const std::wstring & name) override;
+  virtual OperationResult RenameSanctum(const std::wstring & newName) override;
   virtual std::wstring GetSanctumName() const override;
   virtual FileOperationResult Put(const std::wstring & path) override;
   virtual FileOperationResult Get(const std::wstring & path) override;

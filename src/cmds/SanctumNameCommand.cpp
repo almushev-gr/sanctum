@@ -30,12 +30,35 @@ bool SanctumNameCommand::Run(const std::vector<std::wstring> & params)
     return true;
   }
 
-  core::OperationResult result = GetCore().SetSanctumName(params[0]);
+  std::map<std::wstring, std::wstring> opts = GetOptions(params);
+  core::OperationResult result;
+
+  if (opts.count(L"r"))
+  {
+    result = GetCore().RenameSanctum(params[0]);
+
+    if (result == core::OperationResult::Ok)
+    {
+      AddSuccessMessageStrings({L"Sanctum renamed successfully"});
+    }
+  }
+  else
+  {
+    result = GetCore().SetSanctumName(params[0]);
+  }
 
   if (result == core::OperationResult::Ok)
   {
     AddSuccessMessageStrings({L"Current Sanctum name: " + GetCore().GetSanctumName()});
     return true;
+  }
+  else if (result == core::OperationResult::FileAlreadyExist)
+  {
+    AddFailMessageStrings({L"Sanctum with this name already exists"});
+  }
+  else 
+  {
+    Command::MakeMessagesForNegativeResult(result);
   }
  
   return false;

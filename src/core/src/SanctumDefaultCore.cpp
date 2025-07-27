@@ -494,7 +494,10 @@ std::vector<std::filesystem::path> DefaultCore::FindFilesInWorkDir(const std::fi
       }
       else
       {
-        if (fileName == entry.path().stem())
+        std::wstring fileNameAsStr = fileName.wstring();
+        std::wstring nextFileAsStr = entry.path().stem().wstring();
+        
+        if (nextFileAsStr.find(fileNameAsStr) != std::wstring::npos)
         {
           foundFiles.push_back(entry.path());
         }
@@ -686,6 +689,64 @@ OperationResult DefaultCore::SetSanctumName(const std::wstring & name)
   m_sanctumPath = m_sanctumDir / m_sanctumName;
   m_contentsTable.reset();
     
+  return OperationResult::Ok;
+}
+
+
+//----------------------------------------------------------
+/*
+  Переименовать текущее хранилище
+  Меняет имя хранилища и при этом переименовывает файлы
+*/
+//---
+OperationResult DefaultCore::RenameSanctum(const std::wstring & newName)
+{
+  std::filesystem::path pathBefore = m_sanctumPath;
+  std::filesystem::path fantomPathBefore = GetFantomPath();
+  bool isSanctumExist = std::filesystem::exists(pathBefore);
+  bool isFantomExist = std::filesystem::exists(fantomPathBefore);
+  std::wstring nameBefore = GetSanctumName();
+  
+  if (!isSanctumExist && !isFantomExist)
+  {
+    return OperationResult::NoSanctum;
+  }
+
+  SetSanctumName(newName);
+
+  try 
+  {
+    if (isSanctumExist)
+    {
+      if (!std::filesystem::exists(m_sanctumPath))
+      {
+        std::filesystem::rename(pathBefore, m_sanctumPath);
+      }
+      else
+      {
+        SetSanctumName(nameBefore);
+        return OperationResult::FileAlreadyExist;
+      }
+    }
+
+    if (isFantomExist)
+    {
+      if (!std::filesystem::exists(GetFantomPath()))
+      {
+        std::filesystem::rename(fantomPathBefore, GetFantomPath());
+      }
+      else
+      {
+        SetSanctumName(nameBefore);
+        return OperationResult::FileAlreadyExist;
+      }
+    }
+  }
+  catch (const std::filesystem::filesystem_error& e)
+  {
+    return OperationResult::RenameFileError;  
+  }
+
   return OperationResult::Ok;
 }
 
@@ -926,6 +987,17 @@ bool DefaultCore::SaveConfig() const
   {
     cfgDirNode.append_child(pugi::node_pcdata).set_value(m_sanctumDir.wstring().c_str());
   }
+
+  pugi::xml_node cfgNameNode = cfgRootNode.append_child(L"SanctumName");
+
+  if (m_sanctumName == c_sanctumDefaultName)
+  {
+    cfgNameNode.append_child(pugi::node_pcdata).set_value(L"Default");
+  }
+  else
+  {
+    cfgNameNode.append_child(pugi::node_pcdata).set_value(m_sanctumName.wstring().c_str());
+  }
   
   pugi::xml_node cfgWorkDirNode = cfgRootNode.append_child(L"WorkDir");
   
@@ -988,11 +1060,28 @@ void DefaultCore::LoadConfig()
 
     if (cfgNodeValue == L"Default")
     {
-      m_sanctumDir = std::filesystem::current_path();
+      SetSanctumDir(std::filesystem::current_path());
     }
     else 
     {
-      m_sanctumDir = cfgNodeValue;
+      SetSanctumDir(cfgNodeValue);
+    }
+  }
+
+
+  pugi::xml_node cfgNameNode = cfgRootNode.child(L"SanctumName");
+
+  if (cfgNameNode)
+  {
+    cfgNodeValue = cfgNameNode.child_value();
+
+    if (cfgNodeValue == L"Default")
+    {
+      SetSanctumName(c_sanctumDefaultName);
+    }
+    else 
+    {
+      SetSanctumName(cfgNodeValue);
     }
   }
 
@@ -1004,11 +1093,11 @@ void DefaultCore::LoadConfig()
 
     if (cfgNodeValue == L"Default")
     {
-      m_workDir = std::filesystem::current_path();
+      SetWorkDir(std::filesystem::current_path());
     }
     else 
     {
-      m_workDir = cfgNodeValue;
+      SetWorkDir(cfgNodeValue);
     }
   }
 

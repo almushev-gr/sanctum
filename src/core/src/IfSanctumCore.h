@@ -79,6 +79,7 @@ struct IfSanctumCore
   virtual OperationResult SetSanctumDir(const std::wstring & dirFullPath) = 0;
   virtual std::wstring GetSanctumDir() const = 0; 
   virtual OperationResult SetSanctumName(const std::wstring & name) = 0;
+  virtual OperationResult RenameSanctum(const std::wstring & newName) = 0;
   virtual std::wstring GetSanctumName() const = 0;
   virtual FileOperationResult Put(const std::wstring & path) = 0;
   virtual FileOperationResult Get(const std::wstring & path) = 0;
