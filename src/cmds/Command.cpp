@@ -67,10 +67,61 @@ void Command::MakeMessagesForNegativeResult(core::OperationResult result)
   Ввести оперативный ключ шифрации
 */
 //---
-bool Command::EnterOperationKey()
+EnterKeyResult Command::EnterOperationKey()
+{
+  std::optional<std::string> key = EnterKey("Key required: ");
+
+  if (!key)
+  {
+    return EnterKeyResult::Interrupted;
+  }
+   
+  m_core->SetOperationKey(*key);
+  return EnterKeyResult::Ok;
+}
+
+
+//----------------------------------------------------------
+/*
+  Ввести оперативный ключ шифрации с подтверждением
+*/
+//---
+EnterKeyResult Command::EnterConfirmatedOperationKey()
+{
+  std::optional<std::string> key = EnterKey("Key required: ");
+
+  if (!key)
+  {
+    return EnterKeyResult::Interrupted;
+  }
+   
+  std::optional<std::string> conirmationKey = EnterKey("Key confirmation: ");
+
+  if (!conirmationKey)
+  {
+    return EnterKeyResult::Interrupted;
+  }
+  else if (*key != *conirmationKey)
+  {
+    AddFailMessageStrings({L"Key confirmation mismatch"});
+    return EnterKeyResult::ConfirmationMismatch;
+  }
+
+  m_core->SetOperationKey(*key);
+  return EnterKeyResult::Ok;
+}
+
+
+//----------------------------------------------------------
+/*
+  Ввести ключ из консоли
+  \return nullopt если был нажат Escape
+*/
+//---
+std::optional<std::string> Command::EnterKey(const std::string & promt)
 {
   std::string key;
-  std::cout << "Key required: ";
+  std::cout << promt;
   char ch;
   
   while ((ch = _getch()) != '\r') // while not Enter
@@ -83,16 +134,20 @@ bool Command::EnterOperationKey()
         key.pop_back();
       }
     } 
+    else if (ch == 27)
+    {
+      std::cout << std::endl;
+      return std::nullopt;
+    }
     else 
     {
       key += ch;
       std::cout << '*'; 
     }
   }
-  
+
   std::cout << std::endl;
-  m_core->SetOperationKey(key);
-  return true;
+  return key;
 }
 
 

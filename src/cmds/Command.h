@@ -8,6 +8,15 @@
 namespace sanctum
 {
 
+// результат ввода ключа
+enum class EnterKeyResult
+{
+  Interrupted,
+  ConfirmationMismatch,
+  Ok
+};
+
+
 //----------------------------------------------------------
 /*
   Команда общего назначения
@@ -34,7 +43,9 @@ protected:
   void ClearSuccessMessage() { m_successMessage.clear(); }
   void ClearFailMessage() { m_failMessage.clear(); }
   void ClearMessages();
-  bool EnterOperationKey();
+  EnterKeyResult EnterOperationKey();
+  EnterKeyResult EnterConfirmatedOperationKey();
+  std::optional<std::string> EnterKey(const std::string & promt);
   std::optional<std::wstring> ResolveAmbiguousInput(const std::vector<std::wstring> & inputs) const;
   void MakeMessagesForNegativeResult(core::OperationResult result);
   std::map<std::wstring, std::wstring> GetOptions(const std::vector<std::wstring> & params) const;

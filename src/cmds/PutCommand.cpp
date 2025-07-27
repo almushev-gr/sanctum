@@ -38,13 +38,29 @@ bool PutCommand::Run(const std::vector<std::wstring> & params)
 
   if (result.opResult == core::OperationResult::KeyRequired)
   {
-    if (EnterOperationKey())
+    EnterKeyResult enterResult;
+    std::map<std::wstring, std::wstring> opts = GetOptions(params);
+
+    if (opts.count(L"ckey"))
+    {
+      enterResult = EnterConfirmatedOperationKey();
+    }
+    else
+    {
+      enterResult = EnterOperationKey();
+    }
+    
+    if (enterResult == EnterKeyResult::Ok)
     {
       result = GetCore().Put(fileName);
     }
-    else 
+    else if (enterResult == EnterKeyResult::Interrupted)
     {
       return true;
+    }
+    else 
+    {
+      return false;
     }
   }
 

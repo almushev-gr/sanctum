@@ -1,4 +1,5 @@
 #include "ContentCommand.h"
+#include "Command.h"
 #include "IfSanctumCore.h"
 #include "ConsoleTable.h"
 #include <string>
@@ -97,7 +98,9 @@ bool ContentCommand::Run(const std::vector<std::wstring> & params)
 
   if (result.opResult == core::OperationResult::KeyRequired)
   {
-    if (EnterOperationKey())
+    EnterKeyResult enterResult = EnterOperationKey();
+
+    if (enterResult == EnterKeyResult::Ok)
     {
       result = GetCore().GetFileDescriptions();
     }

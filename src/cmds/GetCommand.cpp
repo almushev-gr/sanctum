@@ -1,4 +1,5 @@
 #include "GetCommand.h"
+#include "Command.h"
 #include "IfSanctumCore.h"
 
 
@@ -38,7 +39,7 @@ bool GetCommand::Run(const std::vector<std::wstring> & params)
 
   if (result.opResult == core::OperationResult::KeyRequired)
   {
-    if (EnterOperationKey())
+    if (EnterOperationKey() == EnterKeyResult::Ok)
     {
       result = GetCore().Get(fileName);
     }
