@@ -22,6 +22,7 @@ public:
 
 private:
   void KeyInformation();
+  bool CoreKeyOperation(const std::map<std::wstring, std::wstring> & opts);
 };
 
 }

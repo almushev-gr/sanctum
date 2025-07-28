@@ -67,6 +67,7 @@ public:
   virtual OperationResult UnloadEncrypter() override;
   virtual std::wstring GetEncrypterName() const override;
   virtual KeyPolicy GetKeyPolicy() const override;
+  virtual OperationResult ChangeCoreKey(const std::string & currentKey, const std::string & newKey) override;
   virtual bool IsPermanentKeyDefined() const override;
 
 private:

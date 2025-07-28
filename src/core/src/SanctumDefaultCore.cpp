@@ -15,6 +15,7 @@
 namespace 
 {
   constexpr wchar_t c_sanctumDefaultName[] = L"sanctum";
+  constexpr char c_defaultCoreKey[] = "defpass";
 }
 
 
@@ -34,7 +35,7 @@ DefaultCore::DefaultCore()
   , m_sanctumName(c_sanctumDefaultName)
   , m_sanctumPath()
   , m_contentsTable()
-  , m_coreKeyHash(std::hash<std::string>{}("defpass"))
+  , m_coreKeyHash(std::hash<std::string>{}(c_defaultCoreKey))
 {
   LoadConfig();
   m_sanctumPath = m_sanctumDir / m_sanctumName;
@@ -1021,6 +1022,12 @@ bool DefaultCore::SaveConfig() const
     encNode.append_child(pugi::node_pcdata).set_value(m_outsideEncrypterPath.wstring().c_str());
   }
 
+  if (m_coreKeyHash != std::hash<std::string>{}(c_defaultCoreKey)) 
+  {
+    pugi::xml_node coreKeyHashNode = cfgRootNode.append_child(L"CoreKeyHash");
+    coreKeyHashNode.append_child(pugi::node_pcdata).set_value(std::to_wstring(m_coreKeyHash).c_str());
+  }
+
   if (doc.save_file("sanctumcfg.xml")) 
   {
     return true;
@@ -1117,6 +1124,13 @@ void DefaultCore::LoadConfig()
     }
   }
 
+  pugi::xml_node coreKeyHashNode = cfgRootNode.child(L"CoreKeyHash");
+
+  if (coreKeyHashNode)
+  {
+    cfgNodeValue = coreKeyHashNode.child_value();
+    m_coreKeyHash = std::stoull(cfgNodeValue);
+  }
 }
 
 
@@ -1318,6 +1332,28 @@ KeyPolicy DefaultCore::GetKeyPolicy() const
 bool DefaultCore::IsPermanentKeyDefined() const 
 {
   return !m_permanentKey.empty();
+}
+
+
+//----------------------------------------------------------
+/*
+  Изменить ключ ядра
+*/
+//---
+OperationResult DefaultCore::ChangeCoreKey(const std::string & currentKey, const std::string & newKey)
+{
+  if (std::hash<std::string>{}(currentKey) != m_coreKeyHash)
+  {
+    return OperationResult::InvalidKey;
+  }
+
+  if (newKey.empty())
+  {
+    return OperationResult::InvalidKey;
+  }
+
+  m_coreKeyHash = std::hash<std::string>{}(newKey);
+  return OperationResult::Ok;
 }
 
 

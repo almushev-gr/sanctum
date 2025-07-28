@@ -89,6 +89,7 @@ struct IfSanctumCore
   virtual OperationResult UnloadEncrypter() = 0;
   virtual std::wstring GetEncrypterName() const = 0;
   virtual KeyPolicy GetKeyPolicy() const = 0;
+  virtual OperationResult ChangeCoreKey(const std::string & currentKey, const std::string & newKey) = 0;
   virtual bool IsPermanentKeyDefined() const = 0;
   virtual ContentsOperationResult GetFileDescriptions() = 0;
   virtual void ClearContents() = 0;
