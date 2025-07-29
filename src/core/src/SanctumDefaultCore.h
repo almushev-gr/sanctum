@@ -69,6 +69,9 @@ public:
   virtual KeyPolicy GetKeyPolicy() const override;
   virtual OperationResult ChangeCoreKey(const std::string & currentKey, const std::string & newKey) override;
   virtual bool IsPermanentKeyDefined() const override;
+  virtual bool IsCoreKeyValid(const std::string & key) const override;
+  virtual void DropCoreKey() override;
+  virtual OperationResult IsEncKeyValid(const std::string & key) const override;
 
 private:
   std::wstring GetFileDirUpTo(const std::wstring & fileName, const std::wstring & dirName);

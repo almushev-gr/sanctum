@@ -53,49 +53,119 @@ bool KeyCommand::CoreKeyOperation(const std::map<std::wstring, std::wstring> & o
 {
   if (opts.count(L"edit"))
   {
-    std::optional<std::string> currentCoreKey = EnterKey("Enter current core key: ");
-
-    if (!currentCoreKey)
-    {
-      return true;
-    }
-
-    std::optional<std::string> newCoreKey = EnterKey("Enter new core key: ");
-
-    if (!newCoreKey)
-    {
-      return true;
-    }
-
-    std::optional<std::string> confirmCoreKey = EnterKey("Confirm new core key: ");
-
-    if (!confirmCoreKey)
-    {
-      return true;
-    }
-
-    if (*newCoreKey == *confirmCoreKey)
-    {
-      core::OperationResult result = GetCore().ChangeCoreKey(*currentCoreKey, *newCoreKey);
-
-      if (result == core::OperationResult::Ok)
-      {
-        AddSuccessMessageStrings({L"Core key changed successfully"});
-        return true;
-      }
-      else          
-      {
-        AddFailMessageStrings({L"Invalid current (or new) key entered"});
-        return false;
-      }
-    }
-    else
-    {
-      AddFailMessageStrings({L"Key confirmation failed"});
-      return false;
-    }
+    return EditCoreKey();
+  }
+  else if (opts.count(L"drop"))
+  {
+    return DropCoreKey();
+  }
+  else if (opts.count(L"check"))
+  {
+    return CheckCoreKey();
   }
 
+  return false;
+}
+
+
+//----------------------------------------------------------
+/*
+  Изменить ключ уровня ядра
+*/
+//--- 
+bool KeyCommand::EditCoreKey()
+{
+  std::optional<std::string> currentCoreKey = EnterKey("Enter current core key: ");
+
+  if (!currentCoreKey)
+  {
+    return true;
+  }
+
+  std::optional<std::string> newCoreKey = EnterKey("Enter new core key: ");
+
+  if (!newCoreKey)
+  {
+    return true;
+  }
+
+  std::optional<std::string> confirmCoreKey = EnterKey("Confirm new core key: ");
+
+  if (!confirmCoreKey)
+  {
+    return true;
+  }
+
+  if (*newCoreKey == *confirmCoreKey)
+  {
+    core::OperationResult result = GetCore().ChangeCoreKey(*currentCoreKey, *newCoreKey);
+
+    if (result == core::OperationResult::Ok)
+    {
+      AddSuccessMessageStrings({L"Core key changed successfully"});
+      return true;
+    }
+    else          
+    {
+      AddFailMessageStrings({L"Invalid current (or new) key entered"});
+    }
+  }
+  else
+  {
+    AddFailMessageStrings({L"Key confirmation failed"});
+  }
+
+  return false;
+}
+
+
+//----------------------------------------------------------
+/*
+  Скинуть ключ ядра на умолчательный
+*/
+//--- 
+bool KeyCommand::DropCoreKey()
+{
+  std::optional<std::string> currentCoreKey = EnterKey("Enter current core key: ");
+
+  if (!currentCoreKey)
+  {
+    return true;
+  }
+
+  if (GetCore().IsCoreKeyValid(*currentCoreKey))
+  {
+    GetCore().DropCoreKey();
+    AddSuccessMessageStrings({L"Core key droped"});
+    return true;
+  }
+
+  AddFailMessageStrings({L"Invalid core key entered"});
+  return false;
+}
+
+
+//----------------------------------------------------------
+/*
+  Проверить ключ ядра
+*/
+//--- 
+bool KeyCommand::CheckCoreKey()
+{
+  std::optional<std::string> currentCoreKey = EnterKey("Enter current core key: ");
+
+  if (!currentCoreKey)
+  {
+    return true;
+  }
+
+  if (GetCore().IsCoreKeyValid(*currentCoreKey))
+  {
+    AddSuccessMessageStrings({L"Core key is valid"});
+    return true;
+  }
+
+  AddFailMessageStrings({L"Invalid core key"});
   return false;
 }
 

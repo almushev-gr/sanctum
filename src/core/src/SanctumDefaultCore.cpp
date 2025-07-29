@@ -1359,6 +1359,42 @@ OperationResult DefaultCore::ChangeCoreKey(const std::string & currentKey, const
 
 //----------------------------------------------------------
 /*
+  Проверить валидность ключа ядра
+*/
+//---
+bool DefaultCore::IsCoreKeyValid(const std::string & key) const 
+{
+  return std::hash<std::string>{}(key) == m_coreKeyHash;
+}
+
+
+//----------------------------------------------------------
+/*
+  Сбросить ключ ядра до умолчательного
+*/
+//---
+void DefaultCore::DropCoreKey()
+{
+  m_coreKeyHash = std::hash<std::string>{}(c_defaultCoreKey);
+}
+
+
+//----------------------------------------------------------
+/*
+  Проверить валидность ключа шифратора
+*/
+//---
+OperationResult DefaultCore::IsEncKeyValid(const std::string & key) const 
+{
+  m_operationKey = key;
+  OperationResult result = CheckDecryption();
+  m_operationKey.clear();
+  return result;
+}
+
+
+//----------------------------------------------------------
+/*
   Создать ядро хранилища
 */
 //---
