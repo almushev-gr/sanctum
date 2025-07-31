@@ -32,6 +32,7 @@ private:
   size_t m_offset{0}; ///< смещение внутри хранилища
   int m_version{0}; ///< версия файла
   std::vector<char> m_content; ///< содержимое файла
+  std::optional<char> m_checkSum; ///< контрольная сумма незашифрованного файла
 
 public:
   FileInsideSanctum() = default;

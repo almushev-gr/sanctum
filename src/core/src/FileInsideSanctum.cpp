@@ -267,6 +267,15 @@ bool FileInsideSanctum::ReadHeaderFrom(std::ifstream & input, sanctum::encrypter
   {
     return false;
   }
+
+  char checkSum;
+  input.read(reinterpret_cast<char *>(&checkSum), sizeof(char));
+  m_checkSum = checkSum;
+
+  if (input.fail())
+  {
+    return false;
+  }
   
   size_t fileSize;
   input.read(reinterpret_cast<char *>(&fileSize), sizeof(size_t));
@@ -278,6 +287,29 @@ bool FileInsideSanctum::ReadHeaderFrom(std::ifstream & input, sanctum::encrypter
 
   m_contentSize = fileSize;
   return true;
+}
+
+
+namespace 
+{
+
+//----------------------------------------------------------
+/*
+  Расчитать контрольную сумму для набора байт
+*/
+//---
+char GetXorCheckSum(const std::vector<char> & bytes)
+{
+  char result = 0;
+
+  for (char nextChar : bytes)
+  {
+    result ^= nextChar;
+  }
+
+  return result;
+}
+
 }
 
 
@@ -303,6 +335,7 @@ bool FileInsideSanctum::WriteTo(std::ofstream & output, sanctum::encrypter::IfEn
 
   std::vector<char> fileBytes(fileSize);
   file.read(fileBytes.data(), fileSize);
+  m_checkSum = GetXorCheckSum(fileBytes);
 
   if (!file.fail())
   {
@@ -335,7 +368,7 @@ bool FileInsideSanctum::WriteTo(std::ofstream & output, sanctum::encrypter::IfEn
 //---
 bool FileInsideSanctum::WriteHeaderTo(std::ofstream & output, sanctum::encrypter::IfEncrypter & encrypter, const std::string & key) const
 {
-  if (!m_contentSize || m_encName.empty())
+  if (!m_contentSize || m_encName.empty() || !m_checkSum)
   {
     return false;
   }
@@ -356,6 +389,11 @@ bool FileInsideSanctum::WriteHeaderTo(std::ofstream & output, sanctum::encrypter
   }
  
   if (!WriteEncStringToStream(m_name, output, encrypter, key))
+  {
+    return false;
+  }
+
+  if (!WriteDigitToStream<char>(output, *m_checkSum))
   {
     return false;
   }
