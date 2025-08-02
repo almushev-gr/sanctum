@@ -22,7 +22,7 @@ public:
 
 private:
   void ApplyOptionsToResult(const std::vector<std::wstring> & params, core::ContentsOperationResult & result);
-
+  core::ContentsOperationResult GetFileDescriptions(const std::map<std::wstring, std::wstring> & opts) const;
 };
 
 }

@@ -94,7 +94,7 @@ bool ContentCommand::Run(const std::vector<std::wstring> & params)
     return true;
   }
 
-  result = GetCore().GetFileDescriptions();
+  result = GetFileDescriptions(opts);
 
   if (result.opResult == core::OperationResult::KeyRequired)
   {
@@ -102,7 +102,7 @@ bool ContentCommand::Run(const std::vector<std::wstring> & params)
 
     if (enterResult == EnterKeyResult::Ok)
     {
-      result = GetCore().GetFileDescriptions();
+      result = GetFileDescriptions(opts);
     }
     else 
     {
@@ -144,6 +144,22 @@ bool ContentCommand::Run(const std::vector<std::wstring> & params)
   }
     
   return false;
+}
+
+
+//----------------------------------------------------------
+/*
+  Получить описания файлов в зависимости от ключей
+*/
+//--- 
+core::ContentsOperationResult ContentCommand::GetFileDescriptions(const std::map<std::wstring, std::wstring> & opts) const
+{
+  if (opts.count(L"commit"))
+  {
+    return GetCore().GetCommitFileDescriptions();
+  }
+
+  return GetCore().GetFileDescriptions();
 }
 
 

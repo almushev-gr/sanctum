@@ -668,6 +668,53 @@ ContentsOperationResult DefaultCore::GetFileDescriptions()
 
 //----------------------------------------------------------
 /*
+  Получить описания файлов следующего коммита
+*/
+//---
+ContentsOperationResult DefaultCore::GetCommitFileDescriptions()
+{
+  ContentsOperationResult result;
+  OperationResult checkKeyResult = CheckKey();
+
+  if (checkKeyResult != OperationResult::Ok)
+  {
+    m_operationKey.clear();
+    result.opResult = checkKeyResult;
+    return result;
+  }
+
+  result.opResult = OperationResult::Ok;
+
+  if (!std::filesystem::exists(GetFantomPath()))
+  {
+    return result;
+  }
+
+  std::vector<FileDescription> fantomDescs = GetContentsTable().GetDescriptions();
+
+  if (fantomDescs.empty())
+  {
+    return result;
+  }
+
+  ContentsTable sanctumContents;
+  result.opResult = sanctumContents.Update(m_sanctumPath, *m_encrypter, GetKey());
+
+  if (result.opResult == OperationResult::Ok && sanctumContents.GetDescriptions().size() < fantomDescs.size())
+  {
+    for (size_t i=sanctumContents.GetDescriptions().size(); i<fantomDescs.size(); i++)
+    {
+      result.descs.push_back(fantomDescs[i]);
+    }
+  }
+
+  m_operationKey.clear();
+  return result;
+}
+
+
+//----------------------------------------------------------
+/*
   Очистить закешированное оглавление хранилища
 */
 //---

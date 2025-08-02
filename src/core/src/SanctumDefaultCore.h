@@ -60,6 +60,7 @@ public:
   virtual FileOperationResult Get(const std::wstring & path) override;
   virtual OperationResult Commit() override;
   virtual ContentsOperationResult GetFileDescriptions() override;
+  virtual ContentsOperationResult GetCommitFileDescriptions() override;
   virtual void ClearContents() override;
   virtual bool SaveConfig() const override;
   virtual void SetOperationKey(const std::string & key) override;
