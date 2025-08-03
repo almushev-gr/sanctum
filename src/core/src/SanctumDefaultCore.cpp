@@ -534,6 +534,11 @@ FileOperationResult DefaultCore::PutFileByAbsPath(const std::filesystem::path & 
     putFile.SetVersion(fileVersion);
     std::vector<FileInsideSanctum> putFiles{putFile};
     result = PutFiles(putFiles, PutFileMethod::Append);
+
+    if (result.opResult == OperationResult::Ok && !dirInSanctum.empty())
+    {
+      PurgeEmptyParentDirs(dirInSanctum);
+    }
   }
   else 
   {
@@ -542,6 +547,33 @@ FileOperationResult DefaultCore::PutFileByAbsPath(const std::filesystem::path & 
   }
 
   return result;
+}
+
+
+//----------------------------------------------------------
+/*
+  Прочищает пустые под директории в рабочей директории
+*/
+//---
+void DefaultCore::PurgeEmptyParentDirs(const std::filesystem::path & workSubDir)
+{
+  std::filesystem::path nextParentDir = workSubDir;
+
+  while (!nextParentDir.empty())
+  {
+    std::filesystem::path fullDirPath = m_workDir / nextParentDir;
+
+    if (std::filesystem::exists(fullDirPath) && std::filesystem::is_empty(fullDirPath))
+    {
+      RemoveFromDisk({fullDirPath.wstring()});
+    }
+    else
+    {
+      break;
+    }
+
+    nextParentDir = nextParentDir.parent_path();
+  }
 }
 
 
@@ -586,6 +618,11 @@ FileOperationResult DefaultCore::PutDirByAbsPath(const std::filesystem::path & p
     if (result.opResult == OperationResult::Ok)
     {
       result.opResult = RemoveFromDisk({putPath.wstring()});
+
+      if (!dirInSanctum.empty())
+      {
+        PurgeEmptyParentDirs(dirInSanctum);
+      }
     }
   } 
   catch (const std::filesystem::filesystem_error& err) 
@@ -1312,13 +1349,7 @@ std::filesystem::path DefaultCore::GetCommitDirPath() const
 {
   std::wstring commitDirName = L".commit-" + m_sanctumName.wstring();
   std::filesystem::path commitDirPath = m_sanctumDir / commitDirName;
-
-  if (std::filesystem::exists(commitDirPath))
-  {
-    return commitDirPath;
-  }
-  
-  return {};
+  return commitDirPath;
 }
 
 

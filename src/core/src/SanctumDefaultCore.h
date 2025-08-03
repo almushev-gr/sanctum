@@ -95,6 +95,7 @@ private:
   OperationResult RemoveFromDisk(const std::vector<std::wstring> & paths);
   FileOperationResult GetDir(const std::wstring & dirPath);
   ContentsTable & GetContentsTable();
+  void PurgeEmptyParentDirs(const std::filesystem::path & workSubDir);
 
 };
 
