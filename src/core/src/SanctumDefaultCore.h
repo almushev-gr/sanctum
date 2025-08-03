@@ -89,6 +89,9 @@ private:
   OperationResult CheckKey() const;
   OperationResult CheckDecryption() const;
   std::string GetKey() const;
+  FileOperationResult ReplaceFileToCommitDir(const FileInsideSanctum & fileInSanctum);
+  std::filesystem::path GetCommitDirPath() const;
+  bool CreateCommitXml(const FileInsideSanctum & fileInSanctum, const std::filesystem::path & filePath);
   OperationResult RemoveFromDisk(const std::vector<std::wstring> & paths);
   FileOperationResult GetDir(const std::wstring & dirPath);
   ContentsTable & GetContentsTable();

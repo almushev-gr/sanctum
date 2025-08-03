@@ -687,6 +687,7 @@ ContentsOperationResult DefaultCore::GetCommitFileDescriptions()
 
   if (!std::filesystem::exists(GetFantomPath()))
   {
+    m_operationKey.clear();
     return result;
   }
 
@@ -694,11 +695,16 @@ ContentsOperationResult DefaultCore::GetCommitFileDescriptions()
 
   if (fantomDescs.empty())
   {
+    m_operationKey.clear();
     return result;
   }
 
   ContentsTable sanctumContents;
-  result.opResult = sanctumContents.Update(m_sanctumPath, *m_encrypter, GetKey());
+
+  if (std::filesystem::exists(m_sanctumPath))
+  {
+    result.opResult = sanctumContents.Update(m_sanctumPath, *m_encrypter, GetKey());
+  }
 
   if (result.opResult == OperationResult::Ok && sanctumContents.GetDescriptions().size() < fantomDescs.size())
   {
@@ -926,19 +932,22 @@ FileOperationResult DefaultCore::PutFiles(std::vector<FileInsideSanctum> & files
   }
 
   fantomFile->close();
-
+  
   if (result.opResult == OperationResult::Ok)
   {
-    std::vector<std::wstring> pathsToRemove;
-    
     for (auto && nextFile : filesInSanctum)
     {
-      pathsToRemove.push_back(nextFile.GetFullPath());
+      FileOperationResult replaceResult = ReplaceFileToCommitDir(nextFile);
+
+      if (replaceResult.opResult != OperationResult::Ok)
+      {
+        result.opResult = replaceResult.opResult;
+        std::copy(replaceResult.problemFiles.begin(), replaceResult.problemFiles.end(), 
+          std::back_inserter(result.problemFiles));
+      }
     }
-
-    result.opResult = RemoveFromDisk(pathsToRemove);
   }
-
+  
   return result;
 }
 
@@ -971,6 +980,13 @@ OperationResult DefaultCore::Commit()
     catch (const std::filesystem::filesystem_error& e)
     {
       result = OperationResult::RenameFileError;  
+    }
+
+    std::filesystem::path commitDirPath = GetCommitDirPath();
+
+    if (!commitDirPath.empty())
+    {
+      RemoveFromDisk({commitDirPath.wstring()});
     }
   }
    
@@ -1196,7 +1212,7 @@ void DefaultCore::SetOperationKey(const std::string & key)
 
 //----------------------------------------------------------
 /*
-  Удалить файлы с диска
+  Удалить файлы (или директории) с диска
 */
 //---
 OperationResult DefaultCore::RemoveFromDisk(const std::vector<std::wstring> & paths)
@@ -1214,6 +1230,130 @@ OperationResult DefaultCore::RemoveFromDisk(const std::vector<std::wstring> & pa
   }
 
   return OperationResult::Ok;
+}
+
+
+//----------------------------------------------------------
+/*
+  Переместить файл во временную директорию коммита
+*/
+//---
+FileOperationResult DefaultCore::ReplaceFileToCommitDir(const FileInsideSanctum & fileInSanctum)
+{
+  FileOperationResult result;
+  std::filesystem::path commitDirPath = GetCommitDirPath();
+  
+  try 
+  {
+    std::filesystem::create_directory(commitDirPath);
+  }
+  catch (const std::filesystem::filesystem_error& ex)
+  {
+    result.opResult = OperationResult::AddFileToCommitError;
+    result.problemFiles.push_back(fileInSanctum.GetFullPath());
+    return result;
+  }
+
+  std::filesystem::path dirInSanctum = fileInSanctum.GetDirName();
+  std::filesystem::path nameInSanctum = fileInSanctum.GetName();
+  std::filesystem::path pathInSanctum = dirInSanctum / nameInSanctum;
+
+  size_t fileId = std::hash<std::wstring>{}(pathInSanctum.wstring());
+  std::wstring fileNameInCommitDir = nameInSanctum.stem().wstring() + L"_" + std::to_wstring(fileId);
+  std::filesystem::path filePathInCommitDir = commitDirPath / fileNameInCommitDir;
+
+  if (std::filesystem::exists(filePathInCommitDir))
+  {
+    OperationResult removeResult = RemoveFromDisk({filePathInCommitDir.wstring()});
+
+    if (removeResult != OperationResult::Ok)
+    {
+      result.opResult = removeResult;
+      result.problemFiles.push_back(filePathInCommitDir.wstring());
+      return result;
+    }
+  }
+
+  result.opResult = OperationResult::Ok;
+
+  try
+  {
+    std::filesystem::rename(fileInSanctum.GetFullPath(), filePathInCommitDir);
+  } 
+  catch (const std::filesystem::filesystem_error& e)
+  {
+    result.opResult = OperationResult::AddFileToCommitError;  
+    result.problemFiles.push_back(fileInSanctum.GetFullPath());
+  }
+
+  bool xmlCreated = false;
+
+  if (result.opResult == OperationResult::Ok)
+  {
+    xmlCreated = CreateCommitXml(fileInSanctum, filePathInCommitDir);
+  }
+
+  if (!xmlCreated)
+  {
+    result.opResult = OperationResult::AddFileToCommitError;  
+    result.problemFiles.push_back(fileInSanctum.GetFullPath());
+  }
+
+  return result;
+}
+
+
+//----------------------------------------------------------
+/*
+  Получить путь к директории с оригиналами файлов коммита
+*/
+//---
+std::filesystem::path DefaultCore::GetCommitDirPath() const
+{
+  std::wstring commitDirName = L".commit-" + m_sanctumName.wstring();
+  std::filesystem::path commitDirPath = m_sanctumDir / commitDirName;
+
+  if (std::filesystem::exists(commitDirPath))
+  {
+    return commitDirPath;
+  }
+  
+  return {};
+}
+
+
+//----------------------------------------------------------
+/*
+  Создать описание для файла во временной директории
+  коммита. Нужно для возможного отката коммита
+*/
+//---
+bool DefaultCore::CreateCommitXml(const FileInsideSanctum & fileInSanctum, const std::filesystem::path & filePath)
+{
+  std::filesystem::path xmlPath = filePath.wstring() + L".xml";
+
+  if (std::filesystem::exists(xmlPath))
+  {
+    return true; // описание файла меняться не может. Может меняться только версия файла
+  }
+
+  std::filesystem::path fileOriginPath = fileInSanctum.GetFullPath();
+  std::filesystem::path fileOriginDir = fileOriginPath.parent_path();
+  std::filesystem::path fileOriginName = fileOriginPath.filename();
+
+  pugi::xml_document doc;
+  pugi::xml_node fileRootNode = doc.append_child(L"FileDescription");
+  pugi::xml_node fileDirNode = fileRootNode.append_child(L"Directory");
+  fileDirNode.append_child(pugi::node_pcdata).set_value(fileOriginDir.wstring().c_str());
+  pugi::xml_node fileNameNode = fileRootNode.append_child(L"Name");
+  fileNameNode.append_child(pugi::node_pcdata).set_value(fileOriginName.wstring().c_str());
+
+  if (doc.save_file(xmlPath.wstring().c_str()))
+  {
+    return true;
+  }
+
+  return false;
 }
 
 

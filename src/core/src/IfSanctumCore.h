@@ -22,6 +22,7 @@ enum class OperationResult
   WrongKeyOrEncrypter, // либо не тот шифратор, либо не тот ключ
   UnknownError,
   RemoveFileError,
+  AddFileToCommitError, // ошибка при включении файла в коммит
   RenameFileError,
   OutsideEncrypterAlreadyLoaded, 
   OutsideEncrypterNotLoaded,
