@@ -26,6 +26,7 @@ private:
   bool EditCoreKey();
   bool DropCoreKey();
   bool CheckCoreKey();
+  bool CheckKey();
 };
 
 }

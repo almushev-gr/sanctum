@@ -37,12 +37,64 @@ bool KeyCommand::Run(const std::vector<std::wstring> & params)
   {
     return CoreKeyOperation(opts);
   }
-
+  else if (opts.count(L"perm"))
+  {
+    // todo: редактирование\сброс постоянного ключа
+  }
+  else if (opts.count(L"check"))
+  {
+    return CheckKey();
+  }
+  else 
+  {
+    AddFailMessageStrings({L"Unknown key params"});
+  }
   
-
-  return true;  
+  return false;  
 }
 
+
+//----------------------------------------------------------
+/*
+  Проверка ключ ширфации
+  Если шифратор не использует ключ шифрации,
+  то проверяется ключ ядра
+*/
+//--- 
+bool KeyCommand::CheckKey()
+{
+  if (GetCore().GetKeyPolicy() == core::KeyPolicy::CoreKey)
+  {
+    return CheckCoreKey();
+  }
+  else if (GetCore().GetKeyPolicy() == core::KeyPolicy::EncrypterKey)
+  {
+    std::optional<std::string> encKey = EnterKey("Enter encrypter key: ");
+
+    if (!encKey)
+    {
+      return true;
+    }
+
+    core::OperationResult isEncValidResult = GetCore().IsEncKeyValid(*encKey);
+
+    if (isEncValidResult == core::OperationResult::Ok)
+    {
+      AddSuccessMessageStrings({L"Encrypter key is valid"});
+      return true;
+    }
+    else
+    {
+      MakeMessagesForNegativeResult(isEncValidResult);
+    }
+  }
+  else
+  {
+    AddFailMessageStrings({L"Unknown error"});
+  }
+ 
+  return false;
+}
 
 //----------------------------------------------------------
 /*
@@ -62,6 +114,10 @@ bool KeyCommand::CoreKeyOperation(const std::map<std::wstring, std::wstring> & o
   else if (opts.count(L"check"))
   {
     return CheckCoreKey();
+  }
+  else
+  {
+    AddFailMessageStrings({L"Unknown error"});
   }
 
   return false;
