@@ -96,6 +96,7 @@ struct IfSanctumCore
   virtual OperationResult ChangeCoreKey(const std::string & currentKey, const std::string & newKey) = 0;
   virtual bool IsCoreKeyValid(const std::string & key) const = 0;
   virtual void DropCoreKey() = 0;
+  virtual void SetPermanentKey(const std::string & key) = 0;
   virtual OperationResult IsEncKeyValid(const std::string & key) const = 0;
   virtual bool IsPermanentKeyDefined() const = 0;
   virtual void SetOperationKey(const std::string & key) = 0;

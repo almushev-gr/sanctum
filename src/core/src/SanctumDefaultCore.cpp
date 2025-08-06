@@ -1555,6 +1555,17 @@ bool DefaultCore::IsPermanentKeyDefined() const
 
 //----------------------------------------------------------
 /*
+  Задать постоянный ключ ширфации ядра
+*/
+//---
+void DefaultCore::SetPermanentKey(const std::string & key)
+{
+  m_permanentKey = key;
+}
+
+
+//----------------------------------------------------------
+/*
   Изменить ключ ядра
 */
 //---

@@ -23,9 +23,12 @@ public:
 private:
   void KeyInformation();
   bool CoreKeyOperation(const std::map<std::wstring, std::wstring> & opts);
+  bool PermanentKeyOperation(const std::map<std::wstring, std::wstring> & opts);
   bool EditCoreKey();
   bool DropCoreKey();
   bool CheckCoreKey();
+  bool EditPermanentKey();
+  bool DropPermanentKey();
   bool CheckKey();
 };
 

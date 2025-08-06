@@ -39,7 +39,7 @@ bool KeyCommand::Run(const std::vector<std::wstring> & params)
   }
   else if (opts.count(L"perm"))
   {
-    // todo: редактирование\сброс постоянного ключа
+    return PermanentKeyOperation(opts);
   }
   else if (opts.count(L"check"))
   {
@@ -98,7 +98,7 @@ bool KeyCommand::CheckKey()
 
 //----------------------------------------------------------
 /*
-  Вывести информацию о защите хранилища
+  Операция над ключом ядра
 */
 //--- 
 bool KeyCommand::CoreKeyOperation(const std::map<std::wstring, std::wstring> & opts)
@@ -121,6 +121,63 @@ bool KeyCommand::CoreKeyOperation(const std::map<std::wstring, std::wstring> & o
   }
 
   return false;
+}
+
+
+//----------------------------------------------------------
+/*
+  Операция над постоянным ключом ядра
+*/
+//--- 
+bool KeyCommand::PermanentKeyOperation(const std::map<std::wstring, std::wstring> & opts)
+{
+  if (opts.count(L"edit"))
+  {
+    return EditPermanentKey();
+  }
+  else if (opts.count(L"drop"))
+  {
+    return DropPermanentKey();
+  }
+  else
+  {
+    AddFailMessageStrings({L"Unknown error"});
+  }
+
+  return false;
+}
+
+
+//----------------------------------------------------------
+/*
+  Изменить постоянный ключ ядра
+*/
+//--- 
+bool KeyCommand::EditPermanentKey()
+{
+  std::optional<std::string> permKey = EnterKey("Enter permanent key: ");
+
+  if (!permKey)
+  {
+    return true;
+  }
+
+  GetCore().SetPermanentKey(*permKey);
+  AddSuccessMessageStrings({L"Permanent key changed"});
+  return true;
+}
+
+
+//----------------------------------------------------------
+/*
+  Сбросить постоянный ключ ядра
+*/
+//---
+bool KeyCommand::DropPermanentKey()
+{
+  GetCore().SetPermanentKey("");
+  AddSuccessMessageStrings({L"Permanent key droped"});
+  return true;
 }
 
 
