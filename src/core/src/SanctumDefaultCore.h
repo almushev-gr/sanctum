@@ -61,6 +61,7 @@ public:
   virtual OperationResult Commit() override;
   virtual ContentsOperationResult GetFileDescriptions() override;
   virtual ContentsOperationResult GetCommitFileDescriptions() override;
+  virtual FileOperationResult CheckFiles() const override;
   virtual void ClearContents() override;
   virtual bool SaveConfig() const override;
   virtual void SetOperationKey(const std::string & key) override;

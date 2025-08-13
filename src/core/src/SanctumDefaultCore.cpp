@@ -671,6 +671,75 @@ std::filesystem::path DefaultCore::GetDirInSanctum(const std::filesystem::path &
 
 //----------------------------------------------------------
 /*
+  Проверить контрольные суммы файлов хранилища
+  Последовательно считывает\расшифровывает файлы
+  и проверяет их контрольные суммы
+*/
+//---
+FileOperationResult DefaultCore::CheckFiles() const
+{
+  FileOperationResult result;
+
+  if (!std::filesystem::exists(GetRelevantPath()))
+  {
+    result.opResult = OperationResult::NoSanctum;
+    return result;
+  }
+
+  OperationResult checkKeyResult = CheckKey();
+
+  if (checkKeyResult != OperationResult::Ok)
+  {
+    m_operationKey.clear();
+    result.opResult = checkKeyResult;
+    return result;
+  }
+
+  std::ifstream sanctumFile(GetRelevantPath().string(), std::ios::binary);
+
+  if (!sanctumFile.is_open())
+  {
+    m_operationKey.clear();
+    result.opResult = OperationResult::NoSanctum;
+    return result;
+  }
+
+  sanctumFile.unsetf(std::ios::skipws);
+
+  result.opResult = OperationResult::Ok;
+
+  while (!sanctumFile.eof())
+  {
+    FileInsideSanctum nextFile;
+        
+    if (nextFile.ReadFrom(sanctumFile, FileInsideSanctum::FileReadMode::Full, *m_encrypter, GetKey()))
+    {
+      if (!nextFile.IsValidCheckSum())
+      {
+        result.opResult = OperationResult::FileProcessFail;
+        result.problemFiles.push_back(nextFile.GetName());
+        break;
+      }
+    }
+    else if (!sanctumFile.eof())
+    {
+      result.opResult = OperationResult::FileProcessFail;
+      break;
+    }
+    else 
+    {
+      break;
+    }
+  }
+  
+  sanctumFile.close();
+  m_operationKey.clear();
+  return result;
+}
+
+
+//----------------------------------------------------------
+/*
   Получить описания файла
 */
 //---

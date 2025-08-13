@@ -418,4 +418,21 @@ void FileInsideSanctum::SetFullPath(const std::wstring & path)
   m_name = std::filesystem::path(path).filename().wstring();
 }
 
+
+//----------------------------------------------------------
+/*
+  Проверить контрольную сумму считанных байтов файла
+  Нужно проверить совпадает ли она с той, что в шапке
+*/
+//---
+bool FileInsideSanctum::IsValidCheckSum() const
+{
+  if (!m_checkSum)
+  {
+    return false;
+  }
+
+  return GetXorCheckSum(m_content) == *m_checkSum;
+}
+
 }

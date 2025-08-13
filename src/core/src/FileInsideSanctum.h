@@ -52,6 +52,7 @@ public:
   void SetFullPath(const std::wstring & path);
   void SetDirInSanctum(const std::wstring & path) { m_dirInSanctum = path; }
   void SetVersion(int version) { m_version = version; }
+  bool IsValidCheckSum() const;
   
 private:
   bool WriteHeaderTo(std::ofstream & output, sanctum::encrypter::IfEncrypter & encrypter, const std::string & key) const;
