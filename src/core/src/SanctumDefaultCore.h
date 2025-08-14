@@ -36,6 +36,7 @@ private:
   std::string m_permanentKey; ///< постоянный ключ шифрования 
   mutable size_t m_coreKeyHash; ///< хеш используемого ключа уровня ядра (для коммитов и шифраторов без ключа)
   std::filesystem::path m_outsideEncrypterPath; ///< путь загруженной внешней библиотеки шифратора
+  ProgressHandler m_progressHandler; ///< обрабочик прогресса операции
 
   // способ размещения файла в хранилище
   enum class PutFileMethod
@@ -61,7 +62,7 @@ public:
   virtual OperationResult Commit() override;
   virtual ContentsOperationResult GetFileDescriptions() override;
   virtual ContentsOperationResult GetCommitFileDescriptions() override;
-  virtual FileOperationResult CheckFiles() const override;
+  virtual FileOperationResult CheckFiles() override;
   virtual void ClearContents() override;
   virtual bool SaveConfig() const override;
   virtual void SetOperationKey(const std::string & key) override;
@@ -75,6 +76,7 @@ public:
   virtual bool IsCoreKeyValid(const std::string & key) const override;
   virtual void DropCoreKey() override;
   virtual OperationResult IsEncKeyValid(const std::string & key) const override;
+  virtual void SetProgressHandler(ProgressHandler handler) override;
 
 private:
   std::wstring GetFileDirUpTo(const std::wstring & fileName, const std::wstring & dirName);

@@ -6,7 +6,6 @@
 #include <DefaultEncrypter.h>
 #include <filesystem>
 #include <algorithm>
-#include <iostream>
 #include <numeric>
 #include <functional>
 #include <windows.h>
@@ -36,6 +35,7 @@ DefaultCore::DefaultCore()
   , m_sanctumPath()
   , m_contentsTable()
   , m_coreKeyHash(std::hash<std::string>{}(c_defaultCoreKey))
+  , m_progressHandler(nullptr)
 {
   LoadConfig();
   m_sanctumPath = m_sanctumDir / m_sanctumName;
@@ -676,7 +676,7 @@ std::filesystem::path DefaultCore::GetDirInSanctum(const std::filesystem::path &
   и проверяет их контрольные суммы
 */
 //---
-FileOperationResult DefaultCore::CheckFiles() const
+FileOperationResult DefaultCore::CheckFiles()
 {
   FileOperationResult result;
 
@@ -695,6 +695,7 @@ FileOperationResult DefaultCore::CheckFiles() const
     return result;
   }
 
+  int fileCount = GetContentsTable().GetFileCount();
   std::ifstream sanctumFile(GetRelevantPath().string(), std::ios::binary);
 
   if (!sanctumFile.is_open())
@@ -707,6 +708,7 @@ FileOperationResult DefaultCore::CheckFiles() const
   sanctumFile.unsetf(std::ios::skipws);
 
   result.opResult = OperationResult::Ok;
+  int i = 0;
 
   while (!sanctumFile.eof())
   {
@@ -719,6 +721,11 @@ FileOperationResult DefaultCore::CheckFiles() const
         result.opResult = OperationResult::FileProcessFail;
         result.problemFiles.push_back(nextFile.GetName());
         break;
+      }
+      else if (m_progressHandler)
+      {
+        i++;
+        m_progressHandler(fileCount, i);
       }
     }
     else if (!sanctumFile.eof())
@@ -1688,6 +1695,17 @@ OperationResult DefaultCore::IsEncKeyValid(const std::string & key) const
   OperationResult result = CheckDecryption();
   m_operationKey.clear();
   return result;
+}
+
+
+//----------------------------------------------------------
+/*
+  Задать обработчик прогресса операций
+*/
+//---
+void DefaultCore::SetProgressHandler(ProgressHandler handler)
+{
+  m_progressHandler = handler;
 }
 
 

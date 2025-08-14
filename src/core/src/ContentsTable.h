@@ -40,6 +40,7 @@ public:
   std::set<std::filesystem::path> GetDirsContainsString(const std::wstring & str);
   std::set<std::filesystem::path> GetFilesContainsString(const std::wstring & str);
   bool IsEmpty() const { return m_fileDescs.empty(); }
+  size_t GetFileCount() const { return m_fileDescs.size(); }
 
 private:
   void AddDirByDescription(const FileDescription & desc);

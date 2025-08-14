@@ -43,6 +43,38 @@ void PrintMessage(const std::vector<std::wstring> & messageLines, MessageType me
 }
 
 
+//----------------------------------------------------------
+/*
+  Обработчик прогресса операций
+*/
+//---
+void ProgressHandler(int totalItems, int currentItem)
+{
+  constexpr int barWidth = 60;
+  double percentage = static_cast<double>(currentItem) / static_cast<double>(totalItems);
+  int pos = barWidth * percentage;
+
+  std::wcout << L"\r[";
+  
+  for (int i=0; i<pos; i++)
+  {
+    std::wcout << L"=";
+  }
+
+  for (int i=pos; i<barWidth; i++)
+  {
+    std::wcout << L" ";
+  }
+
+  std::wcout << L"] " << currentItem << L"/" << totalItems;
+
+  if (currentItem == totalItems)
+  {
+    std::wcout << std::endl;
+  }
+}
+
+
 int main()
 {
   SetConsoleCP(1251);
@@ -57,6 +89,7 @@ int main()
     return 1;
   }
   
+  core->SetProgressHandler(ProgressHandler);
   sanctum::CommandNomenclature commands(*core);
 
   while (true)

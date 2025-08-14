@@ -67,6 +67,9 @@ enum class KeyPolicy
 };
 
 
+using ProgressHandler = void(*)(int, int);
+
+
 //----------------------------------------------------------
 /*
   Интерфейс ядра хранилища
@@ -90,7 +93,7 @@ struct IfSanctumCore
   virtual std::wstring GetEncrypterName() const = 0;
   virtual ContentsOperationResult GetFileDescriptions() = 0;
   virtual ContentsOperationResult GetCommitFileDescriptions() = 0;
-  virtual FileOperationResult CheckFiles() const = 0;
+  virtual FileOperationResult CheckFiles() = 0;
   virtual void ClearContents() = 0;
   virtual OperationResult Commit() = 0;
   virtual KeyPolicy GetKeyPolicy() const = 0;
@@ -101,6 +104,7 @@ struct IfSanctumCore
   virtual OperationResult IsEncKeyValid(const std::string & key) const = 0;
   virtual bool IsPermanentKeyDefined() const = 0;
   virtual void SetOperationKey(const std::string & key) = 0;
+  virtual void SetProgressHandler(ProgressHandler handler) = 0;
   virtual ~IfSanctumCore() = default;
 };
 
