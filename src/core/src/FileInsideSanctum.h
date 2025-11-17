@@ -33,6 +33,7 @@ private:
   int m_version{0}; ///< версия файла
   std::vector<char> m_content; ///< содержимое файла
   std::optional<char> m_checkSum; ///< контрольная сумма незашифрованного файла
+  bool m_isPurgeCandidate{false}; ///< является ли файл кандидатом на очистку
 
 public:
   FileInsideSanctum() = default;
@@ -52,6 +53,8 @@ public:
   void SetFullPath(const std::wstring & path);
   void SetDirInSanctum(const std::wstring & path) { m_dirInSanctum = path; }
   void SetVersion(int version) { m_version = version; }
+  void SetPurgeCandidate(bool isPurgeCandidate) { m_isPurgeCandidate = isPurgeCandidate; }
+  bool IsPurgeCandidate() const { return m_isPurgeCandidate; }
   bool IsValidCheckSum() const;
   
 private:

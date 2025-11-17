@@ -12,6 +12,9 @@ namespace sanctum::core
 //----------------------------------------------------------
 /*
   Обновить оглавление хранилища
+  \param sanctumPath путь к файлу хранилища
+  \param encrypter шифровальщик
+  \param key ключ шифрования
 */
 //---
 OperationResult ContentsTable::Update(const std::filesystem::path & sanctumPath, sanctum::encrypter::IfEncrypter & encrypter, const std::string & key)
@@ -46,6 +49,7 @@ OperationResult ContentsTable::Update(const std::filesystem::path & sanctumPath,
       nextDesc.name = nextFile.GetName();
       nextDesc.dirName = nextFile.GetDirName();
       nextDesc.version = nextFile.GetVersion();
+      nextDesc.isPurgeCandidate = nextFile.IsPurgeCandidate();
       nextDesc.position = i;
       m_fileDescs.push_back(nextDesc);
       AddDirByDescription(nextDesc);

@@ -23,6 +23,9 @@ public:
 private:
   void ApplyOptionsToResult(const std::vector<std::wstring> & params, core::ContentsOperationResult & result);
   core::ContentsOperationResult GetFileDescriptions(const std::map<std::wstring, std::wstring> & opts) const;
+  std::vector<std::wstring> GetTableHeaders(const std::vector<std::wstring> & params);
+  std::vector<std::wstring> GetTableLine(const std::vector<std::wstring> & params, const core::FileDescription & fileDesc);
+
 };
 
 }

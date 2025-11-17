@@ -9,6 +9,7 @@
 namespace 
 {
   constexpr wchar_t c_versionColumnHeader[] = L"Ver";
+  constexpr wchar_t c_purgeCandidateColumnHeader[] = L"Purge";
   constexpr wchar_t c_fileNameColumnHeader[] = L"File";
   constexpr wchar_t c_dirColumnHeader[] = L"Dir";
 }
@@ -114,11 +115,11 @@ bool ContentCommand::Run(const std::vector<std::wstring> & params)
   {
     SortResultDescriptions(result);
     ApplyOptionsToResult(params, result);
-    ConsoleTable table({c_versionColumnHeader, c_fileNameColumnHeader, c_dirColumnHeader});
-    
+    ConsoleTable table(GetTableHeaders(params));
+        
     for (auto && nextDesc : result.descs)
     {
-      table.AddLine({std::to_wstring(nextDesc.version), nextDesc.name, nextDesc.dirName});
+      table.AddLine(GetTableLine(params, nextDesc));
     }
    
     if (table.IsEmpty())
@@ -188,7 +189,7 @@ void ContentCommand::ApplyOptionsToResult(const std::vector<std::wstring> & para
 
   std::map<std::wstring, std::wstring> opts = GetOptions(params);
 
-  if (opts.count(L"mv"))
+  if (opts.count(L"mv")) // показать файлы только с максимальной версией
   {
     using FileID = std::pair<std::wstring, std::wstring>;
     std::map<FileID, int> maxVersions;
@@ -220,7 +221,7 @@ void ContentCommand::ApplyOptionsToResult(const std::vector<std::wstring> & para
                   result.descs.end());
   }
   
-  if (opts.count(L"f") && !opts[L"f"].empty())
+  if (opts.count(L"f") && !opts[L"f"].empty()) // показать только файлы, в имени которых содержится подстрока
   {
     result.descs.erase(std::remove_if(result.descs.begin(), result.descs.end(),
                                  [&opts](const core::FileDescription & nextDesc) 
@@ -230,6 +231,64 @@ void ContentCommand::ApplyOptionsToResult(const std::vector<std::wstring> & para
                   result.descs.end());
   }
 
+  if (opts.count(L"pc")) // показать только кандидатов на очистку
+  {
+    result.descs.erase(std::remove_if(result.descs.begin(), result.descs.end(),
+                                 [&opts](const core::FileDescription & nextDesc) 
+                                 {  
+                                  return !nextDesc.isPurgeCandidate;
+                                 }),
+                  result.descs.end());
+  }
+
+  if (opts.count(L"npc")) // показать только не-кандидатов на очистку
+  {
+    result.descs.erase(std::remove_if(result.descs.begin(), result.descs.end(),
+                                 [&opts](const core::FileDescription & nextDesc) 
+                                 {  
+                                  return nextDesc.isPurgeCandidate;
+                                 }),
+                  result.descs.end());
+  }
+}
+
+
+//----------------------------------------------------------
+/*
+  Получить заголовки для таблицы с файлами
+*/
+//--- 
+std::vector<std::wstring> ContentCommand::GetTableHeaders(const std::vector<std::wstring> & params)
+{
+  std::map<std::wstring, std::wstring> opts = GetOptions(params);
+
+  if (opts.count(L"pch"))
+  {
+    return {c_versionColumnHeader, c_purgeCandidateColumnHeader, c_fileNameColumnHeader, c_dirColumnHeader};
+  }
+
+  return {c_versionColumnHeader, c_fileNameColumnHeader, c_dirColumnHeader};
+}
+
+
+//----------------------------------------------------------
+/*
+  Получить строку для таблицы
+*/
+//--- 
+std::vector<std::wstring> ContentCommand::GetTableLine(const std::vector<std::wstring> & params, const core::FileDescription & fileDesc)
+{
+  std::map<std::wstring, std::wstring> opts = GetOptions(params);
+
+  if (opts.count(L"pch"))
+  {
+    std::wstring version = std::to_wstring(fileDesc.version);
+    std::wstring purgeCandidate = fileDesc.isPurgeCandidate ? L"Purge" : L"In use";
+
+    return {version, purgeCandidate, fileDesc.name, fileDesc.dirName};
+  }
+
+  return {std::to_wstring(fileDesc.version), fileDesc.name, fileDesc.dirName};
 }
 
 }

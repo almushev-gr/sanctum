@@ -38,6 +38,7 @@ struct FileDescription
   std::wstring name;
   std::wstring dirName;
   size_t offset{0}; // смещение внутри хранилища
+  bool isPurgeCandidate{false}; // является ли файл кандидатом на очистку
 };
 
 

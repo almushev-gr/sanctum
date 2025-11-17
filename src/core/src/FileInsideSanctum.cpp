@@ -276,6 +276,16 @@ bool FileInsideSanctum::ReadHeaderFrom(std::ifstream & input, sanctum::encrypter
   {
     return false;
   }
+
+  bool isPurgeCandidate = false;
+  input.read(reinterpret_cast<char *>(&isPurgeCandidate), sizeof(bool));
+  
+  if (input.fail())
+  {
+    return false;
+  }
+
+  m_isPurgeCandidate = isPurgeCandidate;
   
   size_t fileSize;
   input.read(reinterpret_cast<char *>(&fileSize), sizeof(size_t));
@@ -394,6 +404,11 @@ bool FileInsideSanctum::WriteHeaderTo(std::ofstream & output, sanctum::encrypter
   }
 
   if (!WriteDigitToStream<char>(output, *m_checkSum))
+  {
+    return false;
+  }
+
+  if (!WriteDigitToStream<bool>(output, m_isPurgeCandidate))
   {
     return false;
   }
