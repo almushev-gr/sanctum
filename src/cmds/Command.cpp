@@ -153,6 +153,28 @@ std::optional<std::string> Command::EnterKey(const std::string & promt)
 
 //----------------------------------------------------------
 /*
+  Запросить подтверждение
+  \param info информация для подтверждения
+  \param promt строка с запросом
+*/
+//---
+bool Command::Confirm(const std::vector<std::wstring> & info, const std::wstring & promt) const
+{
+  for (auto && nextStr : info)
+  {
+    std::wcout << nextStr << std::endl;
+  }
+
+  std::wcout << promt << L" (y\\n):";
+  wchar_t answer = _getwch();
+  std::wcout << std::endl;
+
+  return answer == L'y' || answer == L'Y' || answer == L'н' || answer == L'Н';
+}
+
+
+//----------------------------------------------------------
+/*
   Разрешить конфликт входных данных
   Пользователю предолагается выбрать вручную вариант
 */

@@ -2,6 +2,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <optional>
 
 
 namespace sanctum::core
@@ -41,6 +42,27 @@ struct FileDescription
   bool isPurgeCandidate{false}; // является ли файл кандидатом на очистку
 };
 
+// цель для команды очистки
+struct PurgeTarget
+{
+  std::wstring fileName; // имя очищаемого файла
+  std::optional<int> version; // версия файла
+  bool isAllVersions{false}; // полная очистка файла
+};
+
+// режим операции
+enum class OperationMode
+{
+  Scouting, // разведка, сбор данных без изменений
+  Action // боевое применение
+};
+
+// результат очистки
+struct PurgeResult
+{
+  OperationResult opResult; ///< результат операции общего вида
+  std::vector<FileDescription> purgedFiles; ///< очищенные файлы
+};
 
 // Результат операции над файлами
 struct FileOperationResult
@@ -105,7 +127,10 @@ struct IfSanctumCore
   virtual OperationResult IsEncKeyValid(const std::string & key) const = 0;
   virtual bool IsPermanentKeyDefined() const = 0;
   virtual void SetOperationKey(const std::string & key) = 0;
+  virtual std::string GetOperationKey() const = 0;
   virtual void SetProgressHandler(ProgressHandler handler) = 0;
+  virtual PurgeResult MarkFilesAsPurged(OperationMode opMode, const PurgeTarget & target) = 0;
+  virtual PurgeResult MarkFilesAsActive(OperationMode opMode, const PurgeTarget & target) = 0;
   virtual ~IfSanctumCore() = default;
 };
 

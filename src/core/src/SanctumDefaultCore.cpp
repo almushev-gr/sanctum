@@ -158,8 +158,8 @@ FileOperationResult DefaultCore::Get(const std::wstring & getPath)
   }
   else  
   {
-    std::set<std::filesystem::path> dirs = GetContentsTable().GetDirsContainsString(getPath);
-    std::set<std::filesystem::path> files = GetContentsTable().GetFilesContainsString(getPath);
+    std::set<std::filesystem::path> dirs = GetContentsTable().GetDirPathsContainsString(getPath);
+    std::set<std::filesystem::path> files = GetContentsTable().GetFilePathsContainsString(getPath);
     size_t varCount = dirs.size() + files.size();
     
     if (varCount == 0)
@@ -201,7 +201,7 @@ FileOperationResult DefaultCore::GetDir(const std::wstring & dirPath)
   FileOperationResult result;
   result.opResult = OperationResult::NoSuchFileOrDir;
 
-  for (auto && nextDesc : GetContentsTable().GetFilesInDir(dirPath))
+  for (auto && nextDesc : GetContentsTable().GetActualFilesInDir(dirPath))
   {
     result = GetFile(nextDesc.dirName, nextDesc.name);
 
@@ -533,7 +533,7 @@ FileOperationResult DefaultCore::PutFileByAbsPath(const std::filesystem::path & 
     int fileVersion = GetContentsTable().GetFileNextVersion(dirInSanctum.wstring(), putPath.filename().wstring());
     putFile.SetVersion(fileVersion);
     std::vector<FileInsideSanctum> putFiles{putFile};
-    result = PutFiles(putFiles, PutFileMethod::Append);
+    result = PutFiles(putFiles);
 
     if (result.opResult == OperationResult::Ok && !dirInSanctum.empty())
     {
@@ -613,7 +613,7 @@ FileOperationResult DefaultCore::PutDirByAbsPath(const std::filesystem::path & p
       }
     }
 
-    result = PutFiles(filesInSanctum, PutFileMethod::Append);
+    result = PutFiles(filesInSanctum);
 
     if (result.opResult == OperationResult::Ok)
     {
@@ -1006,10 +1006,10 @@ std::wstring DefaultCore::GetFileDirUpTo(const std::wstring & fullFileName, cons
   Поместить файлы в хранилище
 */
 //---
-FileOperationResult DefaultCore::PutFiles(std::vector<FileInsideSanctum> & filesInSanctum, PutFileMethod method)
+FileOperationResult DefaultCore::PutFiles(std::vector<FileInsideSanctum> & filesInSanctum)
 {
   FileOperationResult result;
-  std::unique_ptr<std::ofstream> fantomFile = GetFantomOutputStream(method);
+  std::unique_ptr<std::ofstream> fantomFile = GetFantomOutputStream(std::ios::binary | std::ios::app);
 
   if (!fantomFile)
   {
@@ -1112,24 +1112,17 @@ OperationResult DefaultCore::Commit()
   Получить фантомный файл хранилища
 */
 //---
-std::unique_ptr<std::ofstream> DefaultCore::GetFantomOutputStream(PutFileMethod method)
+std::unique_ptr<std::ofstream> DefaultCore::GetFantomOutputStream(const std::ios_base::openmode & mode)
 {
-  std::ios_base::openmode mode = std::ios::binary;
-
-  if (method == PutFileMethod::Append)
+  if (!std::filesystem::exists(GetFantomPath()) && std::filesystem::exists(m_sanctumPath))
   {
-    mode = mode | std::ios::app;
-
-    if (!std::filesystem::exists(GetFantomPath()) && std::filesystem::exists(m_sanctumPath))
+    try 
     {
-      try 
-      {
-        std::filesystem::copy(m_sanctumPath, GetFantomPath());
-      }
-      catch (const std::filesystem::filesystem_error& err)
-      {
-        return nullptr;
-      }
+      std::filesystem::copy(m_sanctumPath, GetFantomPath());
+    }
+    catch (const std::filesystem::filesystem_error& err)
+    {
+      return nullptr;
     }
   }
 
@@ -1320,6 +1313,17 @@ void DefaultCore::LoadConfig()
 void DefaultCore::SetOperationKey(const std::string & key)
 {
   m_operationKey = key;
+}
+
+
+//----------------------------------------------------------
+/*
+  Выдать оперативный ключ шифрации
+*/
+//---
+std::string DefaultCore::GetOperationKey() const
+{
+  return m_operationKey;
 }
 
 
@@ -1706,6 +1710,298 @@ OperationResult DefaultCore::IsEncKeyValid(const std::string & key) const
 void DefaultCore::SetProgressHandler(ProgressHandler handler)
 {
   m_progressHandler = handler;
+}
+
+
+namespace 
+{
+
+//----------------------------------------------------------
+/*
+  Отфильтровать лишние версии версии файлов для
+  дальнейшей простановки знака "на очистку"
+  Файлы фильтруются согласно цели очистки
+  \param files - файлы для фильтрации
+  \param purgeTarget - цель очистки (конкр.версия, все версии и др.)
+*/
+//---
+std::vector<FileDescription> FilterFileVersionsForPurge(const std::vector<FileDescription> & files, const PurgeTarget & target)
+{
+  std::vector<FileDescription> filteredFiles;
+
+  if (target.isAllVersions)
+  {
+    filteredFiles = files;
+  }
+  else if (target.version)
+  {
+    std::copy_if(files.begin(), files.end(), std::back_inserter(filteredFiles), 
+    [&target](const FileDescription & nextDesc){ return nextDesc.version == *target.version; });
+  }
+  else 
+  {
+    std::map<std::wstring, int> actualVersions;
+
+    for (auto && nextFile : files)
+    {
+      std::wstring fileId = nextFile.dirName + nextFile.name;
+        
+      if (actualVersions.count(fileId) && actualVersions[fileId] < nextFile.version)
+      {
+        actualVersions[fileId] = nextFile.version;
+      }
+      else if (!actualVersions.count(fileId))
+      {
+        actualVersions[fileId] = nextFile.version;
+      }
+    }
+      
+    std::copy_if(files.begin(), files.end(), std::back_inserter(filteredFiles), 
+    [&actualVersions](const FileDescription & nextDesc)
+    {
+      std::wstring fileId = nextDesc.dirName+nextDesc.name;
+      return nextDesc.version != actualVersions[fileId];
+    });
+  }
+ 
+  return filteredFiles;
+}
+
+
+//----------------------------------------------------------
+/*
+  Отфильтровать лишние версии версии файлов для
+  дальнейшей активации файлов (метка очистки скинута)
+  Файлы фильтруются согласно цели очистки
+  \param files - файлы для фильтрации
+  \param purgeTarget - цель очистки (конкр.версия, все версии и др.)
+*/
+//---
+std::vector<FileDescription> FilterFileVersionsForActivate(const std::vector<FileDescription> & files, const PurgeTarget & target)
+{
+  std::vector<FileDescription> filteredFiles;
+
+  if (target.isAllVersions)
+  {
+    filteredFiles = files;
+  }
+  else if (target.version)
+  {
+    std::copy_if(files.begin(), files.end(), std::back_inserter(filteredFiles), 
+    [&target](const FileDescription & nextDesc){ return nextDesc.version == *target.version; });
+  }
+  else 
+  {
+    std::map<std::wstring, int> actualVersions;
+
+    for (auto && nextFile : files)
+    {
+      std::wstring fileId = nextFile.dirName + nextFile.name;
+        
+      if (actualVersions.count(fileId) && actualVersions[fileId] < nextFile.version)
+      {
+        actualVersions[fileId] = nextFile.version;
+      }
+      else if (!actualVersions.count(fileId))
+      {
+        actualVersions[fileId] = nextFile.version;
+      }
+    }
+      
+    std::copy_if(files.begin(), files.end(), std::back_inserter(filteredFiles), 
+    [&actualVersions](const FileDescription & nextDesc)
+    {
+      std::wstring fileId = nextDesc.dirName+nextDesc.name;
+      return nextDesc.version == actualVersions[fileId];
+    });
+  }
+ 
+  return filteredFiles;
+}
+
+}
+
+
+//----------------------------------------------------------
+/*
+  Активировать файлы, т.е. снять с них метку очистки
+  \param opMode режим операции
+  \param target цель операции (файл + опции)
+*/
+//---
+PurgeResult DefaultCore::MarkFilesAsActive(OperationMode opMode, const PurgeTarget & target)
+{
+  PurgeResult result;
+  OperationResult checkKeyResult = CheckKey();
+
+  if (checkKeyResult != OperationResult::Ok)
+  {
+    m_operationKey.clear();
+    result.opResult = checkKeyResult;
+    return result;
+  }
+
+  result.purgedFiles = GetFilesForChangePurgeStatus(target.fileName);
+  result.purgedFiles = FilterFileVersionsForActivate(result.purgedFiles, target);
+  result.opResult = OperationResult::Ok;
+
+  if (opMode == OperationMode::Action)
+  {
+    for (auto && nextDesc : result.purgedFiles)
+    {
+      result.opResult = MarkFileAsPurged(nextDesc, false /*AsPurged*/);
+
+      if (result.opResult != OperationResult::Ok) 
+      {
+        break;
+      }
+    }
+
+    if (!result.purgedFiles.empty() && result.opResult == OperationResult::Ok)
+    {
+      GetContentsTable().Update(GetRelevantPath(), *m_encrypter, GetKey());
+    }
+  }
+  
+  m_operationKey.clear();
+  return result;
+}
+
+
+//----------------------------------------------------------
+/*
+  Пометить файлы для последующего удаления из хранилища
+*/
+//---
+PurgeResult DefaultCore::MarkFilesAsPurged(OperationMode opMode, const PurgeTarget & target)
+{
+  PurgeResult result;
+  OperationResult checkKeyResult = CheckKey();
+
+  if (checkKeyResult != OperationResult::Ok)
+  {
+    m_operationKey.clear();
+    result.opResult = checkKeyResult;
+    return result;
+  }
+
+  result.purgedFiles = GetFilesForChangePurgeStatus(target.fileName);
+  result.purgedFiles = FilterFileVersionsForPurge(result.purgedFiles, target);
+  result.opResult = OperationResult::Ok;
+
+  if (opMode == OperationMode::Action)
+  {
+    for (auto && nextDesc : result.purgedFiles)
+    {
+      result.opResult = MarkFileAsPurged(nextDesc, true /*AsPurged*/);
+
+      if (result.opResult != OperationResult::Ok) 
+      {
+        break;
+      }
+    }
+
+    if (!result.purgedFiles.empty() && result.opResult == OperationResult::Ok)
+    {
+      GetContentsTable().Update(GetRelevantPath(), *m_encrypter, GetKey());
+    }
+  }
+  
+  m_operationKey.clear();
+  return result;
+}
+
+
+//----------------------------------------------------------
+/*
+  Изменить (переписать в файле) метку очистки для файла
+  \param fileDesc описание файла
+  \param asPurged помечать как "для очистки" (true) или активировать (false) 
+*/
+//---
+OperationResult DefaultCore::MarkFileAsPurged(const FileDescription & fileDesc, bool asPurged)
+{
+  OperationResult result = OperationResult::Ok;
+  std::ifstream sanctumFile(GetRelevantPath().string(), std::ios::binary);
+
+  if (!sanctumFile.is_open())
+  {
+    result = OperationResult::NoSanctum;
+    return result;
+  }
+
+  sanctumFile.unsetf(std::ios::skipws);
+  sanctumFile.seekg(fileDesc.offset);
+  FileInsideSanctum fileInSanctum;
+
+  if (fileInSanctum.ReadFrom(sanctumFile, FileInsideSanctum::FileReadMode::HeaderOnly, *m_encrypter, GetKey()))
+  {
+    fileInSanctum.SetPurgeCandidate(asPurged);
+  }
+  else
+  {
+    result = OperationResult::FileProcessFail;
+  }
+  
+  sanctumFile.close();
+
+  if (result == OperationResult::Ok)
+  {
+    std::unique_ptr<std::ofstream> fantomFile = GetFantomOutputStream(std::ios::binary | std::ios::in | std::ios::out);
+
+    if (!fantomFile)
+    {
+      result = OperationResult::NoSanctum;
+    }
+    else
+    {
+      fantomFile->unsetf(std::ios::skipws);
+      fantomFile->seekp(fileDesc.offset, std::ios::beg);
+
+      if (!fileInSanctum.WriteHeaderTo(*fantomFile, *m_encrypter, GetKey()))
+      {
+        result = OperationResult::FileProcessFail;
+      }
+
+      fantomFile->close();
+    }
+  }
+ 
+  return result;
+}
+
+
+//----------------------------------------------------------
+/*
+  Получить файлы-кандидаты на будущую очистку
+  \param fileName имя файла
+*/
+//---
+std::vector<FileDescription> DefaultCore::GetFilesForChangePurgeStatus(const std::wstring & fileName)
+{
+  std::filesystem::path fileOrDirPath(fileName);
+  std::filesystem::path fileOrDirName = fileOrDirPath.filename();
+  std::filesystem::path dirInSanctum = fileOrDirPath.parent_path();
+  std::vector<FileDescription> filesForPurge;
+
+  if (fileName.empty())
+  {
+    filesForPurge = GetContentsTable().GetDescriptions();
+  }
+  else if (GetContentsTable().IsFileExist(dirInSanctum, fileOrDirName))
+  {
+    filesForPurge = GetContentsTable().GetFiles(dirInSanctum, fileOrDirName);
+  }
+  else if (GetContentsTable().IsDirExist(fileOrDirPath))
+  {
+    filesForPurge = GetContentsTable().GetFilesInDir(fileName);
+  }
+  else // поиск по фрагменту имени файла
+  {
+    filesForPurge = GetContentsTable().GetFilesContainsString(fileName);
+  }
+
+  return filesForPurge;
 }
 
 

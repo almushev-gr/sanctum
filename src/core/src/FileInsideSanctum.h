@@ -41,6 +41,7 @@ public:
   ~FileInsideSanctum() = default;
 
   bool WriteTo(std::ofstream & output, sanctum::encrypter::IfEncrypter & encrypter, const std::string & key);
+  bool WriteHeaderTo(std::ofstream & output, sanctum::encrypter::IfEncrypter & encrypter, const std::string & key) const;
   bool ReadFrom(std::ifstream & input, FileReadMode mode, sanctum::encrypter::IfEncrypter & encrypter, const std::string & key);
   bool SaveTo(const std::filesystem::path & dirPath) const;
   const std::wstring & GetName() const { return m_name; }
@@ -56,9 +57,8 @@ public:
   void SetPurgeCandidate(bool isPurgeCandidate) { m_isPurgeCandidate = isPurgeCandidate; }
   bool IsPurgeCandidate() const { return m_isPurgeCandidate; }
   bool IsValidCheckSum() const;
-  
+    
 private:
-  bool WriteHeaderTo(std::ofstream & output, sanctum::encrypter::IfEncrypter & encrypter, const std::string & key) const;
   bool ReadHeaderFrom(std::ifstream & input, sanctum::encrypter::IfEncrypter & encrypter, const std::string & key);
 
 };

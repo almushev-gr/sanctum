@@ -10,6 +10,7 @@
 #include "KeyCommand.h"
 #include "SanctumNameCommand.h"
 #include "CheckCommand.h"
+#include "PurgeCommand.h"
 #include <algorithm>
 
 
@@ -35,6 +36,7 @@ CommandNomenclature::CommandNomenclature(core::IfSanctumCore & core)
   m_cmds.emplace_back(std::make_unique<KeyCommand>(*m_core));
   m_cmds.emplace_back(std::make_unique<SanctumNameCommand>(*m_core));
   m_cmds.emplace_back(std::make_unique<CheckCommand>(*m_core));
+  m_cmds.emplace_back(std::make_unique<PurgeCommand>(*m_core));
 }
 
 

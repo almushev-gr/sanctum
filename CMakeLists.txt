@@ -39,6 +39,8 @@ add_executable(${exe_target}
     "src/core/src/IfSanctumCore.h"
     "src/cmds/ConsoleTable.h"
     "src/cmds/ConsoleTable.cpp"
+    "src/cmds/PurgeCommand.h"
+    "src/cmds/PurgeCommand.cpp"
 )
 target_link_libraries(sanctum SanctumDefaultCore)
 target_include_directories(${exe_target} PRIVATE "src" "src/core/src")

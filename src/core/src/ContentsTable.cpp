@@ -147,6 +147,22 @@ std::optional<FileDescription> ContentsTable::GetActual(const std::filesystem::p
 
 //----------------------------------------------------------
 /*
+  Получить все версии конкретного файла
+*/
+//---
+std::vector<FileDescription> ContentsTable::GetFiles(const std::filesystem::path & dirPath, const std::filesystem::path & fileName) const
+{
+  std::vector<FileDescription> files;
+
+  std::copy_if(m_fileDescs.begin(), m_fileDescs.end(), std::back_inserter(files),
+   [&dirPath, &fileName](const FileDescription & nextDesc) { return nextDesc.dirName == dirPath.wstring() && nextDesc.name == fileName.wstring(); });
+  
+  return files;
+}
+
+
+//----------------------------------------------------------
+/*
   Добавить директорию по описанию файла
 */
 //---
@@ -199,10 +215,11 @@ bool ContentsTable::IsDirExist(const std::wstring & dirPath) const
 
 //----------------------------------------------------------
 /*
-  Получить файлы, содержащиеся в директории
+  Получить актуальные версии файлов, содержащиеся в директории
+  \param dirPath - полный путь к директории в хранилище
 */
 //---
-std::vector<FileDescription> ContentsTable::GetFilesInDir(const std::wstring & dirPath)
+std::vector<FileDescription> ContentsTable::GetActualFilesInDir(const std::wstring & dirPath)
 {
   std::vector<FileDescription> result;
 
@@ -221,6 +238,28 @@ std::vector<FileDescription> ContentsTable::GetFilesInDir(const std::wstring & d
     });
 
   return result;
+}
+
+
+//----------------------------------------------------------
+/*
+  Получить все файлы в директории
+  \param dirPath - полный путь к директории в хранилище
+*/
+//---
+std::vector<FileDescription> ContentsTable::GetFilesInDir(const std::wstring & dirPath)
+{
+  std::vector<FileDescription> result;
+
+  std::copy_if(m_fileDescs.begin(), m_fileDescs.end(), std::back_inserter(result),
+  [&dirPath](const FileDescription & nextDesc)
+    {
+      size_t posInLine = nextDesc.dirName.find(dirPath);
+      return posInLine == 0;
+    });
+
+  return result;
+
 }
 
 
@@ -253,7 +292,7 @@ std::optional<int> ContentsTable::GetActualVersion(const std::wstring & dirInSan
   Получить директории, в имени которых есть строка
 */
 //---
-std::set<std::filesystem::path> ContentsTable::GetDirsContainsString(const std::wstring & str)
+std::set<std::filesystem::path> ContentsTable::GetDirPathsContainsString(const std::wstring & str)
 {
   std::set<std::filesystem::path> result;
 
@@ -275,10 +314,10 @@ std::set<std::filesystem::path> ContentsTable::GetDirsContainsString(const std::
 
 //----------------------------------------------------------
 /*
-  Получить файлы, в имени которых есть строка
+  Получить полные пути (в хранилище) файлов, в имени которых есть строка
 */
 //---
-std::set<std::filesystem::path> ContentsTable::GetFilesContainsString(const std::wstring & str)
+std::set<std::filesystem::path> ContentsTable::GetFilePathsContainsString(const std::wstring & str)
 {
   std::set<std::filesystem::path> filePaths;
 
@@ -292,6 +331,27 @@ std::set<std::filesystem::path> ContentsTable::GetFilesContainsString(const std:
   }
 
   return filePaths;
+}
+
+
+//----------------------------------------------------------
+/*
+  Получить описания файлов, в имени которых есть строка
+*/
+//---
+std::vector<FileDescription> ContentsTable::GetFilesContainsString(const std::wstring & str)
+{
+  std::vector<FileDescription> result;
+
+  for (auto && nextDesc : m_fileDescs)
+  {
+    if (nextDesc.name.find(str) != std::wstring::npos)
+    {
+      result.push_back(nextDesc);
+    }
+  }
+
+  return result;
 }
 
 }

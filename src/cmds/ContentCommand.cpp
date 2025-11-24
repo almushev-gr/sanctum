@@ -262,7 +262,7 @@ std::vector<std::wstring> ContentCommand::GetTableHeaders(const std::vector<std:
 {
   std::map<std::wstring, std::wstring> opts = GetOptions(params);
 
-  if (opts.count(L"pch"))
+  if (opts.count(L"pch")) // показывать маркер очистки
   {
     return {c_versionColumnHeader, c_purgeCandidateColumnHeader, c_fileNameColumnHeader, c_dirColumnHeader};
   }

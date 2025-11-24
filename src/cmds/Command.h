@@ -49,7 +49,7 @@ protected:
   std::optional<std::wstring> ResolveAmbiguousInput(const std::vector<std::wstring> & inputs) const;
   void MakeMessagesForNegativeResult(core::OperationResult result);
   std::map<std::wstring, std::wstring> GetOptions(const std::vector<std::wstring> & params) const;
-
+  bool Confirm(const std::vector<std::wstring> & info, const std::wstring & promt) const;
 };
 
 }

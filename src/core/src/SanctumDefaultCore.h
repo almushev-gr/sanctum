@@ -38,13 +38,6 @@ private:
   std::filesystem::path m_outsideEncrypterPath; ///< путь загруженной внешней библиотеки шифратора
   ProgressHandler m_progressHandler; ///< обрабочик прогресса операции
 
-  // способ размещения файла в хранилище
-  enum class PutFileMethod
-  {
-    ClearOthers, // с предварительной очисткой хранилища
-    Append // добавить к остальным файлам в хранилище
-  };
-
 public:
   DefaultCore();
   virtual ~DefaultCore() = default;
@@ -66,6 +59,7 @@ public:
   virtual void ClearContents() override;
   virtual bool SaveConfig() const override;
   virtual void SetOperationKey(const std::string & key) override;
+  virtual std::string GetOperationKey() const override;
   virtual OperationResult LoadEncrypter(const std::wstring & encPath) override;
   virtual OperationResult UnloadEncrypter() override;
   virtual std::wstring GetEncrypterName() const override;
@@ -77,13 +71,15 @@ public:
   virtual void DropCoreKey() override;
   virtual OperationResult IsEncKeyValid(const std::string & key) const override;
   virtual void SetProgressHandler(ProgressHandler handler) override;
+  virtual PurgeResult MarkFilesAsPurged(OperationMode opMode, const PurgeTarget & target) override;
+  virtual PurgeResult MarkFilesAsActive(OperationMode opMode, const PurgeTarget & target) override;
 
 private:
   std::wstring GetFileDirUpTo(const std::wstring & fileName, const std::wstring & dirName);
   std::filesystem::path GetFantomPath() const;
   std::filesystem::path GetRelevantPath() const;
-  std::unique_ptr<std::ofstream> GetFantomOutputStream(PutFileMethod method);
-  FileOperationResult PutFiles(std::vector<FileInsideSanctum> & fileDescs, PutFileMethod method);
+  std::unique_ptr<std::ofstream> GetFantomOutputStream(const std::ios_base::openmode & mode);
+  FileOperationResult PutFiles(std::vector<FileInsideSanctum> & fileDescs);
   FileOperationResult PutFileByAbsPath(const std::filesystem::path & putPath);
   FileOperationResult PutDirByAbsPath(const std::filesystem::path & putPath);
   FileOperationResult GetFile(const std::filesystem::path & dirInSanctum, const std::filesystem::path & fileName);
@@ -100,7 +96,9 @@ private:
   FileOperationResult GetDir(const std::wstring & dirPath);
   ContentsTable & GetContentsTable();
   void PurgeEmptyParentDirs(const std::filesystem::path & workSubDir);
-
+  std::vector<FileDescription> GetFilesForChangePurgeStatus(const std::wstring & fileName);
+  OperationResult MarkFileAsPurged(const FileDescription & fileDesc, bool asPurged);
+  
 };
 
 }
