@@ -1022,7 +1022,7 @@ FileOperationResult DefaultCore::PutFiles(std::vector<FileInsideSanctum> & files
   
   for (auto && nextFile : filesInSanctum)
   {
-    if (nextFile.WriteTo(*fantomFile, *m_encrypter, GetKey()))
+    if (nextFile.ReadAndEncryptTo(*fantomFile, *m_encrypter, GetKey()))
     {
       FileDescription newDesc;
       newDesc.version = nextFile.GetVersion();
@@ -1710,6 +1710,115 @@ OperationResult DefaultCore::IsEncKeyValid(const std::string & key) const
 void DefaultCore::SetProgressHandler(ProgressHandler handler)
 {
   m_progressHandler = handler;
+}
+
+
+//----------------------------------------------------------
+/*
+  Очистить файлы из хранилища
+  Удаляются файлы с меткой на очистку
+  \param opMode режим очистки
+*/
+//---
+PurgeResult DefaultCore::Purge(OperationMode opMode)
+{
+  PurgeResult result;
+
+  if (GetRelevantPath() == GetFantomPath())
+  {
+    result.opResult = OperationResult::UncommitedChanges;
+    return result;
+  }
+
+  OperationResult checkKeyResult = CheckKey();
+
+  if (checkKeyResult != OperationResult::Ok)
+  {
+    m_operationKey.clear();
+    result.opResult = checkKeyResult;
+    return result;
+  }
+
+  int fileCount = GetContentsTable().GetFileCount();
+  std::ifstream sanctumFile(GetRelevantPath().string(), std::ios::binary);
+
+  if (!sanctumFile.is_open())
+  {
+    m_operationKey.clear();
+    result.opResult = OperationResult::NoSanctum;
+    return result;
+  }
+
+  sanctumFile.unsetf(std::ios::skipws);
+  std::unique_ptr<std::ofstream> purgedFile;
+
+  if (opMode == OperationMode::Action)
+  {
+    purgedFile = GetFantomOutputStream(std::ios::binary | std::ios::out);
+
+    if (!purgedFile)
+    {
+      sanctumFile.close();
+      m_operationKey.clear();
+      result.opResult = OperationResult::NoSanctum;
+      return result;
+    }
+  }
+
+  result.opResult = OperationResult::Ok;
+  int i = 0;
+
+  while (!sanctumFile.eof())
+  {
+    FileInsideSanctum nextFile;
+        
+    if (nextFile.ReadFrom(sanctumFile, FileInsideSanctum::FileReadMode::Full, *m_encrypter, GetKey()))
+    {
+      if (nextFile.IsPurgeCandidate())
+      {
+        result.purgedFiles.push_back({.version=nextFile.GetVersion(), .name = nextFile.GetName(), .dirName=nextFile.GetDirName()});
+      }
+
+      if (purgedFile && !nextFile.IsPurgeCandidate())
+      {
+        if (!nextFile.WriteTo(*purgedFile, *m_encrypter, GetKey()))
+        {
+          result.opResult = OperationResult::FileProcessFail;
+          break;
+        }
+      }
+
+      if (m_progressHandler)
+      {
+        i++;
+        m_progressHandler(fileCount, i);
+      } 
+    }
+    else if (!sanctumFile.eof())
+    {
+      result.opResult = OperationResult::FileProcessFail;
+      break;
+    }
+    else 
+    {
+      break;
+    }
+  }
+  
+  if (purgedFile)
+  {
+    purgedFile->close();
+  }
+  
+  sanctumFile.close();
+  
+  if (!result.purgedFiles.empty() && result.opResult == OperationResult::Ok && opMode == OperationMode::Action)
+  {
+    GetContentsTable().Update(GetRelevantPath(), *m_encrypter, GetKey());
+  }
+  
+  m_operationKey.clear();
+  return result;
 }
 
 

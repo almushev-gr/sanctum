@@ -325,10 +325,33 @@ char GetXorCheckSum(const std::vector<char> & bytes)
 
 //----------------------------------------------------------
 /*
-  Записать файл в поток c шифрованием данных
+  Записать файл в поток с шифрацией
 */
 //---
 bool FileInsideSanctum::WriteTo(std::ofstream & output, sanctum::encrypter::IfEncrypter & encrypter, const std::string & key)
+{
+  std::vector<char> encFileBytes = encrypter.Encrypt(m_content, key);
+
+  if (WriteHeaderTo(output, encrypter, key))
+  {
+    for (auto && nextByte : encFileBytes)
+    {
+      output << nextByte;
+    }
+
+    return true;
+  }
+
+  return false;
+}
+
+
+//----------------------------------------------------------
+/*
+  Записать файл в поток c шифрованием данных
+*/
+//---
+bool FileInsideSanctum::ReadAndEncryptTo(std::ofstream & output, sanctum::encrypter::IfEncrypter & encrypter, const std::string & key)
 {
   m_offset = static_cast<std::streamoff>(output.tellp());
   std::ifstream file(m_fullPath.c_str(), std::ios::binary);

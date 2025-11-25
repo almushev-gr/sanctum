@@ -27,6 +27,7 @@ private:
   core::PurgeTarget GetPurgeTarget(const std::vector<std::wstring> & params) const;
   bool MarkFilesAsPurged(const std::vector<std::wstring> & params);
   bool MarkFilesAsActive(const std::vector<std::wstring> & params);
+  bool Purge();
 };
 
 }

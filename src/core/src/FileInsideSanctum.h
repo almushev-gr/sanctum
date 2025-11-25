@@ -40,9 +40,10 @@ public:
   FileInsideSanctum(const std::wstring & fullPath, const std::wstring & dirInSanctum, int version);
   ~FileInsideSanctum() = default;
 
-  bool WriteTo(std::ofstream & output, sanctum::encrypter::IfEncrypter & encrypter, const std::string & key);
+  bool ReadAndEncryptTo(std::ofstream & output, sanctum::encrypter::IfEncrypter & encrypter, const std::string & key);
   bool WriteHeaderTo(std::ofstream & output, sanctum::encrypter::IfEncrypter & encrypter, const std::string & key) const;
   bool ReadFrom(std::ifstream & input, FileReadMode mode, sanctum::encrypter::IfEncrypter & encrypter, const std::string & key);
+  bool WriteTo(std::ofstream & output, sanctum::encrypter::IfEncrypter & encrypter, const std::string & key);
   bool SaveTo(const std::filesystem::path & dirPath) const;
   const std::wstring & GetName() const { return m_name; }
   const std::wstring & GetDirName() const { return m_dirInSanctum; }

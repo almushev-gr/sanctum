@@ -12,6 +12,7 @@ namespace sanctum::core
 enum class OperationResult
 {
   NoSanctum,
+  UncommitedChanges, // хранилище содержит незафиксированные изменения
   NoWorkFile, // рабочий файл не задан
   NoSuchFileOrDir,
   FileProcessFail,  // ошибка при работе с файлом
@@ -131,6 +132,7 @@ struct IfSanctumCore
   virtual void SetProgressHandler(ProgressHandler handler) = 0;
   virtual PurgeResult MarkFilesAsPurged(OperationMode opMode, const PurgeTarget & target) = 0;
   virtual PurgeResult MarkFilesAsActive(OperationMode opMode, const PurgeTarget & target) = 0;
+  virtual PurgeResult Purge(OperationMode opMode) = 0;
   virtual ~IfSanctumCore() = default;
 };
 

@@ -73,8 +73,7 @@ bool PurgeCommand::Run(const std::vector<std::wstring> & params)
 
   if (opts.count(L"fatality"))  // физическая зачистка помеченных файлов
   {
-    // core::PurgeResult result = GetCore().Purge(PurgeMode::Confirmation)
-    // 
+    return Purge();
   }
   else if (!params.empty() && opts.count(L"u")) // вернуть файлы в строй (снять метку)
   {
@@ -87,6 +86,72 @@ bool PurgeCommand::Run(const std::vector<std::wstring> & params)
 
   AddFailMessageStrings({L"Files for purge not found"});
   return false;
+}
+
+
+//----------------------------------------------------------
+/*
+  Прочистить файлы с меткой на очистку
+  Файлы физически удаляются из хранилища
+*/
+//--- 
+bool PurgeCommand::Purge()
+{
+  core::PurgeResult result = GetCore().Purge(core::OperationMode::Scouting);
+  std::string operationKey;  
+
+  if (result.opResult == core::OperationResult::KeyRequired)
+  {
+    if (EnterOperationKey() == EnterKeyResult::Ok)
+    {
+      operationKey = GetCore().GetOperationKey();
+      result = GetCore().Purge(core::OperationMode::Scouting);
+    }
+    else 
+    {
+      return true;
+    }
+  }
+
+  if (result.opResult == core::OperationResult::Ok)
+  {
+    ConsoleTable table({c_versionColumnHeader, c_fileNameColumnHeader, c_dirColumnHeader});
+  
+    for (auto && nextDesc : result.purgedFiles)
+    {
+      table.AddLine({std::to_wstring(nextDesc.version), nextDesc.name, nextDesc.dirName});
+    }
+
+    table.TurnOnUnderSeparator();
+
+    if (Confirm(table.GetPrintStrings(), L"Files will be purged. Proceed?"))
+    {
+      GetCore().SetOperationKey(operationKey);
+      result = GetCore().Purge(core::OperationMode::Action);
+
+      if (result.opResult == core::OperationResult::Ok)
+      {
+        AddSuccessMessageStrings({L"Files purged succesfully"});
+      }
+      else
+      {
+        Command::MakeMessagesForNegativeResult(result.opResult);
+        return false;
+      }
+    }
+  }
+  else if (result.opResult == core::OperationResult::UncommitedChanges)
+  {
+    AddFailMessageStrings({L"Sanctum has uncommited changes"});
+    return false;
+  }
+  else
+  {
+    Command::MakeMessagesForNegativeResult(result.opResult);
+    return false;
+  }
+
+  return true;
 }
 
 

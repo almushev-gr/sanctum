@@ -73,6 +73,7 @@ public:
   virtual void SetProgressHandler(ProgressHandler handler) override;
   virtual PurgeResult MarkFilesAsPurged(OperationMode opMode, const PurgeTarget & target) override;
   virtual PurgeResult MarkFilesAsActive(OperationMode opMode, const PurgeTarget & target) override;
+  virtual PurgeResult Purge(OperationMode opMode) override;
 
 private:
   std::wstring GetFileDirUpTo(const std::wstring & fileName, const std::wstring & dirName);
