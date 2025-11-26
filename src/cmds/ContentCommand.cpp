@@ -83,7 +83,7 @@ void SortResultDescriptions(core::ContentsOperationResult & result)
 bool ContentCommand::Run(const std::vector<std::wstring> & params)
 {
   ClearMessages();
-  std::map<std::wstring, std::wstring> opts = GetOptions(params);
+  std::map<std::wstring, std::wstring> opts = Command::GetOptions(params);
 
   core::ContentsOperationResult result;
 
@@ -187,7 +187,7 @@ void ContentCommand::ApplyOptionsToResult(const std::vector<std::wstring> & para
     return;
   }
 
-  std::map<std::wstring, std::wstring> opts = GetOptions(params);
+  std::map<std::wstring, std::wstring> opts = Command::GetOptions (params);
 
   if (opts.count(L"mv")) // показать файлы только с максимальной версией
   {
@@ -260,7 +260,7 @@ void ContentCommand::ApplyOptionsToResult(const std::vector<std::wstring> & para
 //--- 
 std::vector<std::wstring> ContentCommand::GetTableHeaders(const std::vector<std::wstring> & params)
 {
-  std::map<std::wstring, std::wstring> opts = GetOptions(params);
+  std::map<std::wstring, std::wstring> opts = Command::GetOptions(params);
 
   if (opts.count(L"pch")) // показывать маркер очистки
   {
@@ -278,7 +278,7 @@ std::vector<std::wstring> ContentCommand::GetTableHeaders(const std::vector<std:
 //--- 
 std::vector<std::wstring> ContentCommand::GetTableLine(const std::vector<std::wstring> & params, const core::FileDescription & fileDesc)
 {
-  std::map<std::wstring, std::wstring> opts = GetOptions(params);
+  std::map<std::wstring, std::wstring> opts = Command::GetOptions(params);
 
   if (opts.count(L"pch"))
   {

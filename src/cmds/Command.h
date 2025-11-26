@@ -33,6 +33,9 @@ private:
 public:
   Command(core::IfSanctumCore & core);
   virtual ~Command() = default;
+
+  static std::map<std::wstring, std::wstring> GetOptions(const std::vector<std::wstring> & params);
+  static bool IsKeyError(core::OperationResult result);
   virtual const std::vector<std::wstring> & GetSuccessMessage() const override { return m_successMessage; }
   virtual const std::vector<std::wstring> & GetFailMessage() const override { return m_failMessage; }
 
@@ -48,7 +51,6 @@ protected:
   std::optional<std::string> EnterKey(const std::string & promt);
   std::optional<std::wstring> ResolveAmbiguousInput(const std::vector<std::wstring> & inputs) const;
   void MakeMessagesForNegativeResult(core::OperationResult result);
-  std::map<std::wstring, std::wstring> GetOptions(const std::vector<std::wstring> & params) const;
   bool Confirm(const std::vector<std::wstring> & info, const std::wstring & promt) const;
 };
 

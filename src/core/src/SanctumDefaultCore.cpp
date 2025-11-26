@@ -200,8 +200,11 @@ FileOperationResult DefaultCore::GetDir(const std::wstring & dirPath)
 {
   FileOperationResult result;
   result.opResult = OperationResult::NoSuchFileOrDir;
+  const std::vector<FileDescription> filesInDir = GetContentsTable().GetActualFilesInDir(dirPath);
+  const size_t fileCount = filesInDir.size();
+  size_t iFile = 0;
 
-  for (auto && nextDesc : GetContentsTable().GetActualFilesInDir(dirPath))
+  for (auto && nextDesc : filesInDir)
   {
     result = GetFile(nextDesc.dirName, nextDesc.name);
 
@@ -209,6 +212,12 @@ FileOperationResult DefaultCore::GetDir(const std::wstring & dirPath)
     {
       break;
     }
+
+    if (m_progressHandler)
+    {
+      iFile++;
+      m_progressHandler(fileCount, iFile);
+    } 
   }
 
   return result;
@@ -1019,6 +1028,8 @@ FileOperationResult DefaultCore::PutFiles(std::vector<FileInsideSanctum> & files
 
   result.opResult = OperationResult::Ok;
   fantomFile->seekp(0, std::ios_base::end);
+  const size_t fileCount = filesInSanctum.size();
+  size_t iFile = 0;
   
   for (auto && nextFile : filesInSanctum)
   {
@@ -1037,6 +1048,12 @@ FileOperationResult DefaultCore::PutFiles(std::vector<FileInsideSanctum> & files
       result.opResult = OperationResult::FileProcessFail;
       break;
     }
+
+    if (m_progressHandler)
+    {
+      iFile++;
+      m_progressHandler(fileCount, iFile);
+    } 
   }
 
   if (fantomFile->fail())

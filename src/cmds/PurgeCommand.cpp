@@ -180,10 +180,15 @@ bool PurgeCommand::MarkFilesAsActive(const std::vector<std::wstring> & params)
     }
   }
 
-  if (result.purgedFiles.empty())
+  if (IsKeyError(result.opResult))
+  {
+    Command::MakeMessagesForNegativeResult(result.opResult);
+    return false;
+  }
+  else if (result.purgedFiles.empty())
   {
     AddSuccessMessageStrings({L"Files for purge not found"});
-  }
+  } 
   else if (result.opResult == core::OperationResult::Ok)
   {
     ConsoleTable table({c_versionColumnHeader, c_fileNameColumnHeader, c_dirColumnHeader});
@@ -210,6 +215,11 @@ bool PurgeCommand::MarkFilesAsActive(const std::vector<std::wstring> & params)
         return false;
       }
     }
+  }
+  else
+  {
+    Command::MakeMessagesForNegativeResult(result.opResult);
+    return false;
   }
   
   return true;
@@ -240,7 +250,12 @@ bool PurgeCommand::MarkFilesAsPurged(const std::vector<std::wstring> & params)
     }
   }
 
-  if (result.purgedFiles.empty())
+  if (IsKeyError(result.opResult))
+  {
+    Command::MakeMessagesForNegativeResult(result.opResult);
+    return false;
+  }
+  else if (result.purgedFiles.empty())
   {
     AddSuccessMessageStrings({L"Files for purge not found"});
   }
@@ -270,6 +285,11 @@ bool PurgeCommand::MarkFilesAsPurged(const std::vector<std::wstring> & params)
         return false;
       }
     }
+  }
+  else
+  {
+    Command::MakeMessagesForNegativeResult(result.opResult);
+    return false;
   }
   
   return true;

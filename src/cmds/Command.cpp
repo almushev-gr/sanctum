@@ -245,7 +245,7 @@ void Command::AddFailMessageStrings(const std::vector<std::wstring> & strs)
   Выбрать ключи (с параметрами, если есть)
 */
 //---
-std::map<std::wstring,std::wstring> Command::GetOptions(const std::vector<std::wstring> & params) const
+std::map<std::wstring,std::wstring> Command::GetOptions(const std::vector<std::wstring> & params)
 {
   std::map<std::wstring,std::wstring> result;
   std::wstring currentOption;
@@ -277,6 +277,18 @@ std::map<std::wstring,std::wstring> Command::GetOptions(const std::vector<std::w
   }
 
   return result;
+}
+
+
+//----------------------------------------------------------
+/*
+  Представляет ли результат ошибку работы с ключом шифрации
+*/
+//---
+bool Command::IsKeyError(core::OperationResult result)
+{
+  return result == core::OperationResult::InvalidKey || result == core::OperationResult::WrongEncrypter 
+  || result == core::OperationResult::WrongKeyOrEncrypter || result == core::OperationResult::KeyRequired;
 }
 
 }
