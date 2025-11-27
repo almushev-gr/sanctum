@@ -2,6 +2,7 @@
 #include <iostream>
 #include <IfSanctumCore.h>
 #include <cmds/IfCommand.h>
+#include <cmds/Command.h>
 #include <regex>
 #include <windows.h>
 #include <locale>
@@ -75,6 +76,27 @@ void ProgressHandler(int totalItems, int currentItem)
 }
 
 
+//----------------------------------------------------------
+/*
+  Получить справку для команды
+*/
+//---
+std::vector<std::wstring> GetCmdHelp(const sanctum::IfCommand & cmd)
+{
+  std::vector<std::wstring> helpLines = cmd.GetSummaryInfo();
+  const std::vector<std::wstring> detailInfo = cmd.GetDetailInfo();
+        
+  if (!detailInfo.empty())
+  {
+    helpLines.push_back(L"");
+    helpLines.push_back(L"Подробное описание:");
+    std::copy(detailInfo.begin(), detailInfo.end(), std::back_inserter(helpLines));
+  }
+
+  return helpLines;
+}
+
+
 int main()
 {
   SetConsoleCP(1251);
@@ -128,8 +150,18 @@ int main()
     if (sanctum::IfCommand * cmd = commands.Get(tokens[0]))
     {
       tokens.erase(tokens.begin());
+      std::map<std::wstring,std::wstring> opts = sanctum::Command::GetOptions(tokens);
 
-      if (cmd->Run(tokens))
+      if (opts.count(L"help"))
+      {
+        const std::vector<std::wstring> cmdHelpInfo = GetCmdHelp(*cmd);
+        
+        if (!cmdHelpInfo.empty())
+        {
+          PrintMessage(cmdHelpInfo, MessageType::Success);
+        }
+      }
+      else if (cmd->Run(tokens))
       {
         PrintMessage(cmd->GetSuccessMessage(), MessageType::Success);
       }

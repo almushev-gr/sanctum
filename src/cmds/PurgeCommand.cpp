@@ -46,6 +46,11 @@ core::PurgeTarget PurgeCommand::GetPurgeTarget(const std::vector<std::wstring> &
   {
     purgeTarget.fileName = params[0];
 
+    if (purgeTarget.fileName.substr(0,1) == L"-")
+    {
+      purgeTarget.fileName.clear();
+    }
+
     if (opts.count(L"v"))
     {
       purgeTarget.version = std::stoi(opts[L"v"]);
@@ -304,6 +309,50 @@ bool PurgeCommand::MarkFilesAsPurged(const std::vector<std::wstring> & params)
 const std::wstring PurgeCommand::GetName() const
 {
   return L"purge";
+}
+
+
+//----------------------------------------------------------
+/*
+  Получить краткую информацию о команде
+*/
+//--- 
+std::vector<std::wstring> PurgeCommand::GetSummaryInfo() const
+{
+  std::vector<std::wstring> result;
+  result.push_back(L"Формат: purge [fileOrDirName] [-u] [-auto] [-fatality] [-v int] [-all]");
+  result.push_back(L"Служит для:");
+  result.push_back(L"1) расстановки на файлы меток для будущей физической очистки");
+  result.push_back(L"2) снятия с файлов меток очистки");
+  result.push_back(L"3) физической очистки хранилища от помеченных файлов");
+  return result;
+}
+
+
+//----------------------------------------------------------
+/*
+  Детальную информацию о команде
+*/
+//--- 
+std::vector<std::wstring> PurgeCommand::GetDetailInfo() const
+{
+  std::vector<std::wstring> result;
+  result.push_back(L"[fileOrDirName] имя файла\\директории или фрагмент имени");
+  result.push_back(L"Варианты (по приоритету):");
+  result.push_back(L"1) пустое - любой файл в хранилище");
+  result.push_back(L"2) полный путь к файлу в хранилище");
+  result.push_back(L"3) полный путь к директории в хранилище");
+  result.push_back(L"4) фрагмент имени файла");
+  result.push_back(L"[-u] снять метку очистки");
+  result.push_back(L"[-auto] автоматический фильтр версий файлов при редактировании меток");
+  result.push_back(L"При установке меток будут помечаться только неактуальные версии файлов");
+  result.push_back(L"При снятии меток будут активироваться только актуальные версии файлов");
+  result.push_back(L"[-v] редактирование метки для конкретной версии файлов");
+  result.push_back(L"[-all] редактирование метки для всех версий файлов");
+  result.push_back(L"[-fatality] физически прочистить хранилище от помеченных файлов");
+  result.push_back(L"Не требует никаких дополнительных опций, они будут проигнорированы");
+
+  return result;
 }
 
 }

@@ -57,4 +57,28 @@ const std::wstring SanctumDirCommand::GetName() const
   return L"sdir";
 }
 
+
+//----------------------------------------------------------
+/*
+  Получить краткую информацию о команде
+*/
+//--- 
+std::vector<std::wstring> SanctumDirCommand::GetSummaryInfo() const
+{
+  std::vector<std::wstring> result;
+  return result;
+}
+
+
+//----------------------------------------------------------
+/*
+  Детальную информацию о команде
+*/
+//--- 
+std::vector<std::wstring> SanctumDirCommand::GetDetailInfo() const
+{
+  std::vector<std::wstring> result;
+  return result;
+}
+
 }

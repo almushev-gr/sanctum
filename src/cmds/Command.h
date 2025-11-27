@@ -38,6 +38,8 @@ public:
   static bool IsKeyError(core::OperationResult result);
   virtual const std::vector<std::wstring> & GetSuccessMessage() const override { return m_successMessage; }
   virtual const std::vector<std::wstring> & GetFailMessage() const override { return m_failMessage; }
+  virtual std::vector<std::wstring> GetSummaryInfo() const override { return {}; }
+  virtual std::vector<std::wstring> GetDetailInfo() const override { return {}; }
 
 protected:
   core::IfSanctumCore & GetCore() const { return *m_core; }

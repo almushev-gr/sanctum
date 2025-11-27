@@ -22,6 +22,8 @@ public:
   virtual ~PurgeCommand() = default;
   virtual bool Run(const std::vector<std::wstring> & params) override;
   virtual const std::wstring GetName() const override;
+  virtual std::vector<std::wstring> GetSummaryInfo() const override;
+  virtual std::vector<std::wstring> GetDetailInfo() const override;
 
 private:
   core::PurgeTarget GetPurgeTarget(const std::vector<std::wstring> & params) const;

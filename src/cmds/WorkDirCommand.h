@@ -29,6 +29,8 @@ public:
   virtual const std::wstring GetName() const override;
   virtual const std::vector<std::wstring> & GetSuccessMessage() const override { return m_successMessage; }
   virtual const std::vector<std::wstring> & GetFailMessage() const override { return m_failMessage; }
+  virtual std::vector<std::wstring> GetSummaryInfo() const override;
+  virtual std::vector<std::wstring> GetDetailInfo() const override;
 };
 
 }

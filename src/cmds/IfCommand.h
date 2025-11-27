@@ -19,6 +19,8 @@ struct IfCommand
   virtual const std::wstring GetName() const = 0;
   virtual const std::vector<std::wstring> & GetSuccessMessage() const = 0;
   virtual const std::vector<std::wstring> & GetFailMessage() const = 0;
+  virtual std::vector<std::wstring> GetSummaryInfo() const = 0;
+  virtual std::vector<std::wstring> GetDetailInfo() const = 0;
 };
 
 using CommandPtr = std::unique_ptr<IfCommand>;

@@ -46,4 +46,28 @@ const std::wstring SaveConfigCommand::GetName() const
   return L"savecfg";
 }
 
+
+//----------------------------------------------------------
+/*
+  Получить краткую информацию о команде
+*/
+//--- 
+std::vector<std::wstring> SaveConfigCommand::GetSummaryInfo() const
+{
+  std::vector<std::wstring> result;
+  return result;
+}
+
+
+//----------------------------------------------------------
+/*
+  Детальную информацию о команде
+*/
+//--- 
+std::vector<std::wstring> SaveConfigCommand::GetDetailInfo() const
+{
+  std::vector<std::wstring> result;
+  return result;
+}
+
 }

@@ -57,4 +57,28 @@ const std::wstring WorkDirCommand::GetName() const
   return L"wdir";
 }
 
+
+//----------------------------------------------------------
+/*
+  Получить краткую информацию о команде
+*/
+//--- 
+std::vector<std::wstring> WorkDirCommand::GetSummaryInfo() const
+{
+  std::vector<std::wstring> result;
+  return result;
+}
+
+
+//----------------------------------------------------------
+/*
+  Детальную информацию о команде
+*/
+//--- 
+std::vector<std::wstring> WorkDirCommand::GetDetailInfo() const
+{
+  std::vector<std::wstring> result;
+  return result;
+}
+
 }
