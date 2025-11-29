@@ -1889,6 +1889,10 @@ std::vector<FileDescription> FilterFileVersionsForPurge(const std::vector<FileDe
       return nextDesc.version != actualVersions[fileId];
     });
   }
+
+  filteredFiles.erase(std::remove_if(filteredFiles.begin(), filteredFiles.end(),
+   [](const FileDescription & nextDesc){ return nextDesc.isPurgeCandidate;}), 
+   filteredFiles.end());
  
   return filteredFiles;
 }
@@ -1941,7 +1945,11 @@ std::vector<FileDescription> FilterFileVersionsForActivate(const std::vector<Fil
       return nextDesc.version == actualVersions[fileId];
     });
   }
- 
+
+  filteredFiles.erase(std::remove_if(filteredFiles.begin(), filteredFiles.end(),
+   [](const FileDescription & nextDesc){ return !nextDesc.isPurgeCandidate;}), 
+   filteredFiles.end());
+
   return filteredFiles;
 }
 
