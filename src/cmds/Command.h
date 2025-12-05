@@ -31,6 +31,7 @@ private:
   std::vector<std::wstring> m_failMessage; ///< сообщение провального завершения
  
 public:
+  Command();
   Command(core::IfSanctumCore & core);
   virtual ~Command() = default;
 

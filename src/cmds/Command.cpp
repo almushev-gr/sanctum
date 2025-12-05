@@ -13,6 +13,17 @@ namespace sanctum
   
 */
 //--- 
+Command::Command()
+  : m_core(nullptr)
+{
+}
+
+
+//----------------------------------------------------------
+/*
+  
+*/
+//--- 
 Command::Command(core::IfSanctumCore & core)
   : m_core(&core)
 {
@@ -69,6 +80,11 @@ void Command::MakeMessagesForNegativeResult(core::OperationResult result)
 //---
 EnterKeyResult Command::EnterOperationKey()
 {
+  if (!m_core)
+  {
+    return EnterKeyResult::Interrupted;
+  }
+
   std::optional<std::string> key = EnterKey("Key required: ");
 
   if (!key)
@@ -88,6 +104,11 @@ EnterKeyResult Command::EnterOperationKey()
 //---
 EnterKeyResult Command::EnterConfirmatedOperationKey()
 {
+  if (!m_core)
+  {
+    return EnterKeyResult::Interrupted;
+  }
+
   std::optional<std::string> key = EnterKey("Key required: ");
 
   if (!key)
