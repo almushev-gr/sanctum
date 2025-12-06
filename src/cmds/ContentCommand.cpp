@@ -291,4 +291,47 @@ std::vector<std::wstring> ContentCommand::GetTableLine(const std::vector<std::ws
   return {std::to_wstring(fileDesc.version), fileDesc.name, fileDesc.dirName};
 }
 
+
+//----------------------------------------------------------
+/*
+  Получить краткую информацию о команде
+*/
+//--- 
+std::vector<std::wstring> ContentCommand::GetSummaryInfo() const
+{
+  std::vector<std::wstring> result;
+  result.push_back(L"Формат: cnt [-f txt] [-commit] [-mv] [-pc] [-npc] [-pch] [-drop]");
+  result.push_back(L"Служит для вывода содержимого хранилища (список файлов)");
+  return result;
+}
+
+
+//----------------------------------------------------------
+/*
+  Детальную информацию о команде
+*/
+//--- 
+std::vector<std::wstring> ContentCommand::GetDetailInfo() const
+{
+  std::vector<std::wstring> result;
+  result.push_back(L"При запуске без опций будет выведен полный список файлов");
+  result.push_back(L"хранилища без каких-либо фильтраций");
+  result.push_back(L"[-f txt] вывести только файлы, в имени которых есть фрагмент txt");
+  result.push_back(L"имя директории не учитывается");
+  result.push_back(L"[-commit] вывести только новые версии файлов, которые будут");
+  result.push_back(L"добавлены в хранилище при следующем коммите. Изменения меток очистки");
+  result.push_back(L"не приводят к созданию новых версий файлов. Поэтому их не будет в выводе");
+  result.push_back(L"[-mv] вывести только актуальные файлы (с максимальной версией)");
+  result.push_back(L"[-pc] вывести только файлы с меткой очистки (purge candidate)");
+  result.push_back(L"[-npc] вывести только файлы без метки очистки (not purge candidate, in use)");
+  result.push_back(L"[-pch] показывать метку очистки в таблице списка файлов");
+  result.push_back(L"[-drop] очистить текущий список");
+  result.push_back(L"При следующем запуске команды cnt список файлов будет загружен вновь");
+  result.push_back(L"и гарантированно будет отражать содержимое хранилища");
+  result.push_back(L"Опция используется, когда есть сомнения в актуальности текущего");
+  result.push_back(L"списка в кеше. Список кешируется для ускорения работы системы");
+ 
+  return result;
+}
+
 }

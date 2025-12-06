@@ -19,6 +19,8 @@ public:
   virtual ~ContentCommand() = default;
   virtual bool Run(const std::vector<std::wstring> & params) override;
   virtual const std::wstring GetName() const override;
+  virtual std::vector<std::wstring> GetSummaryInfo() const override;
+  virtual std::vector<std::wstring> GetDetailInfo() const override;
 
 private:
   void ApplyOptionsToResult(const std::vector<std::wstring> & params, core::ContentsOperationResult & result);
